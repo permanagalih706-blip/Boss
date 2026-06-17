@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stun Bound: Boss Dodger</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background-color: #e5e7eb;
+            color: #1f2937;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+        #game-container {
+            position: relative;
+            width: 960px;
+            height: 640px;
+            background-color: #f9fafb;
+            border: 6px solid #d1d5db;
+            border-radius: 16px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+        }
+        .screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background-color: #f3f4f6;
+            z-index: 10;
+            transition: opacity 0.2s ease;
+            padding: 40px;
+        }
+        .hidden {
+            display: none !important;
+            opacity: 0;
+            z-index: 0;
+        }
+        h1 {
+            font-size: 3.5rem;
+            font-weight: 900;
+            color: #111827;
+            letter-spacing: -1px;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+        .subtitle {
+            font-size: 1.1rem;
+            color: #4b5563;
+            margin-bottom: 40px;
+            text-align: center;
+            max-width: 600px;
+        }
+        .menu-group {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 100%;
+            max-width: 320px;
+            margin-bottom: 20px;
+        }
+        .setting-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #ffffff;
+            padding: 12px 20px;
+            border-radius: 10px;
+            border: 2px solid #e5e7eb;
+            font-weight: 600;
+        }
+        .badge {
+            background-color: #4f46e5;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            cursor: pointer;
+        }
+        .badge.active-mode { background-color: #059669; }
+        .badge.active-diff { background-color: #dc2626; }
+        .btn {
+            background-color: #1f2937;
+            color: #ffffff;
+            padding: 14px 28px;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            text-transform: uppercase;
+            text-align: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .btn:hover {
+            background-color: #111827;
+            transform: translateY(-1px);
+        }
+        .btn-boss {
+            background-color: #ffffff;
+            color: #1f2937;
+            border: 2px solid #d1d5db;
+            width: 100%;
+            max-width: 400px;
+            margin: 8px 0;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .btn-boss:hover {
+            background-color: #f9fafb;
+            border-color: #9ca3af;
+        }
+        .boss-shape-ico {
+            width: 24px;
+            height: 24px;
+            border: 3px solid #1f2937;
+        }
+        #hud {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            pointer-events: none;
+            z-index: 5;
+        }
+        .hud-panel {
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid #e5e7eb;
+            padding: 12px 18px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+        .hp-heart {
+            font-size: 1.5rem;
+            color: #ef4444;
+            margin-right: 4px;
+        }
+        .bar-container {
+            width: 200px;
+            height: 12px;
+            background-color: #e5e7eb;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+        .bar-fill {
+            height: 100%;
+            width: 100%;
+            transition: width 0.1s linear;
+        }
+        #boss-status-text {
+            font-size: 0.85rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            text-align: right;
+        }
+        #canvas {
+            display: block;
+            background-color: #f3f4f6;
+        }
+        .controls-hint {
+            margin-top: 20px;
+            font-size: 0.85rem;
+            color: #6b7280;
+            text-align: center;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <div id="hud" class="hidden">
+            <div class="hud-panel">
+                <div style="font-weight: 800; font-size: 0.8rem; color: #4b5563;">PLAYER HP</div>
+                <div id="player-hp-container" style="display: flex; margin-top: 2px;"></div>
+                <div style="font-weight: 800; font-size: 0.75rem; color: #6b7280; margin-top: 8px;" id="hud-dash-cooldown">DASH: READY</div>
+            </div>
+            
+            <div class="hud-panel" style="align-items: flex-end; display: flex; flex-direction: column;">
+                <div id="boss-name-hud" style="font-weight: 900; font-size: 1.1rem; color: #111827;">THE VORTEX</div>
+                <div id="boss-status-text" style="color: #dc2626;">IMMORTAL (ATTACKING)</div>
+                <div style="display: flex; gap: 10px; margin-top: 4px;">
+                    <div>
+                        <div style="font-size: 0.7rem; font-weight: 800; color: #4b5563; text-align: right;">BOSS HEALTH</div>
+                        <div class="bar-container"><div id="boss-hp-bar" class="bar-fill" style="background-color: #ef4444;"></div></div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.7rem; font-weight: 800; color: #4b5563; text-align: right;">STAMINA / TIREDNESS</div>
+                        <div class="bar-container"><div id="boss-stamina-bar" class="bar-fill" style="background-color: #3b82f6;"></div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <canvas id="canvas" width="960" height="640"></canvas>
+
+        <div id="menu-screen" class="screen">
+            <h1>STUN BOUND</h1>
+            <p class="subtitle">Bos sepenuhnya Kebal (Immortal) saat menyerang. Hindari badai serangan mereka, tunggu hingga mereka lelah/pegal, lalu hantam sekuat tenaga!</p>
+            
+            <div class="menu-group">
+                <div class="setting-row">
+                    <span>KONTROL:</span>
+                    <span id="toggle-control" class="badge active-mode">MOUSE</span>
+                </div>
+                <div class="setting-row">
+                    <span>KESULITAN:</span>
+                    <span id="toggle-difficulty" class="badge active-diff">NORMAL</span>
+                </div>
+            </div>
+
+            <button class="btn" id="btn-to-boss-select" style="width: 100%; max-width: 320px;">Pilih Target Bos</button>
+            <div class="controls-hint" id="menu-controls-hint">
+                Aksi: Gerak [WASD], Bidik [Mouse], Tembak [Klik Kiri/Tahan], Dash [Klik Kanan]<br>
+                *Dash memberikan kebal 1 detik penuh.
+            </div>
+        </div>
+
+        <div id="boss-select-screen" class="screen hidden">
+            <h2 style="font-size: 2rem; font-weight: 900; margin-bottom: 25px; text-transform: uppercase;">Pilih Tantangan Bos</h2>
+            
+            <button class="btn btn-boss" data-boss="vortex">
+                <div>
+                    <strong style="display:block; font-size:1.1rem;">1. The Vortex</strong>
+                    <span style="font-size:0.85rem; color:#4b5563;">Badai peluru melingkar berputar.</span>
+                </div>
+                <div class="boss-shape-ico" style="border-radius: 50%;"></div>
+            </button>
+
+            <button class="btn btn-boss" data-boss="wall">
+                <div>
+                    <strong style="display:block; font-size:1.1rem;">2. The Wall</strong>
+                    <span style="font-size:0.85rem; color:#4b5563;">Kurungan peluru konvergen dari segala sisi.</span>
+                </div>
+                <div class="boss-shape-ico"></div>
+            </button>
+
+            <button class="btn btn-boss" data-boss="mother">
+                <div>
+                    <strong style="display:block; font-size:1.1rem;">3. The Mother</strong>
+                    <span style="font-size:0.85rem; color:#4b5563;">Pembuat minion hexagon & ledakan teleportasi rahasia.</span>
+                </div>
+                <div class="boss-shape-ico" style="clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); background: transparent; width:26px; height:26px;"></div>
+            </button>
+
+            <button class="btn btn-secondary" id="btn-back-to-menu" style="background:#e5e7eb; color:#1f2937; margin-top:30px; font-size:0.9rem; padding:10px 20px;">Kembali</button>
+        </div>
+
+        <div id="game-over-screen" class="screen hidden">
+            <h2 style="font-size: 3rem; font-weight: 900; color: #dc2626; margin-bottom: 10px;">KAMU TEWAS!</h2>
+            <p class="subtitle" id="game-over-reason">Terlalu banyak terkena hantaman peluru tanpa pelindung.</p>
+            <div style="display: flex; gap: 15px;">
+                <button class="btn" id="btn-retry">Coba Lagi</button>
+                <button class="btn" id="btn-fail-menu" style="background:#e5e7eb; color:#1f2937;">Menu Utama</button>
+            </div>
+        </div>
+
+        <div id="victory-screen" class="screen hidden">
+            <h2 style="font-size: 3rem; font-weight: 900; color: #059669; margin-bottom: 10px;">BOS DIKUDETA!</h2>
+            <p class="subtitle">Refleks dan kalkulasi defensifmu luar biasa. Bos berhasil dihancurkan saat titik terlemahnya.</p>
+            <div style="display: flex; gap: 15px;">
+                <button class="btn" id="btn-victory-continue" style="background:#059669;">Lawan Bos Lain</button>
+                <button class="btn" id="btn-victory-menu" style="background:#e5e7eb; color:#1f2937;">Menu Utama</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // GAME CONSTANTS & CONFIGS
+        const GAME_STATE = { MENU: 'MENU', BOSS_SELECT: 'BOSS_SELECT', PLAYING: 'PLAYING', GAMEOVER: 'GAMEOVER', VICTORY: 'VICTORY' };
+        const CONTROL_MODES = { MOUSE: 'MOUSE', NO_MOUSE: 'NO_MOUSE' };
+        const DIFFICULTIES = { EASY: 'EASY', NORMAL: 'NORMAL', HELL: 'HELL' };
+        
+        let currentState = GAME_STATE.MENU;
+        let selectedControl = CONTROL_MODES.MOUSE;
+        let selectedDifficulty = DIFFICULTIES.NORMAL;
+        let currentBossType = 'vortex'; // vortex, wall, mother
+
+        // RUNTIME OBJECTS
+        let player;
+        let boss;
+        let keys = {};
+        let mouse = { x: 0, y: 0, isDown: false };
+        let projectiles = [];
+        let bossProjectiles = [];
+        let minions = [];
+        let particles = [];
+        let gameFrame = 0;
+
+        // UTILITY CLASSES
+        class Vector2 {
+            constructor(x, y) { this.x = x; this.y = y; }
+            static distance(v1, v2) { return Math.hypot(v1.x - v2.x, v1.y - v2.y); }
+            static angleBetween(v1, v2) { return Math.atan2(v2.y - v1.y, v2.x - v1.x); }
+        }
+
+        // PLAYER CLASS
+        class Player {
+            constructor(x, y) {
+                this.x = x;
+                this.y = y;
+                this.radius = 14;
+                this.speed = 4.5;
+                
+                // Difficulty Settings Setup
+                if (selectedDifficulty === DIFFICULTIES.EASY) this.maxHp = 3;
+                else if (selectedDifficulty === DIFFICULTIES.NORMAL) this.maxHp = 2;
+                else this.maxHp = 1; // HELL
+                
+                this.hp = this.maxHp;
+                this.angle = 0;
+                
+                // Dash Mechanic Settings
+                this.isDashing = false;
+                this.dashTimer = 0;
+                this.dashDuration = 15; // frames (~0.25s)
+                this.dashCooldown = 0;
+                this.dashCooldownMax = 90; // frames (1.5s)
+                this.dashDir = { x: 0, y: 0 };
+                
+                // Invincibility Frames (1 Full Second = 60 frames)
+                this.invincibleTimer = 0;
+                
+                this.shootCooldown = 0;
+                this.shootCooldownMax = 10; 
+            }
+
+            takeDamage() {
+                if (this.invincibleTimer > 0 || this.isDashing) return;
+                this.hp--;
+                createExplosion(this.x, this.y, '#ef4444', 30, 4);
+                this.invincibleTimer = 60; // 1 Detik invincibility ketika terkena hit
+                
+                updateHudUI();
+                if (this.hp <= 0) {
+                    triggerGameOver("Kehabisan nyawa akibat gempuran bos.");
+                }
+            }
+
+            dash() {
+                if (this.dashCooldown > 0 || this.isDashing) return;
+                
+                // Cari arah input gerak saat ini
+                let dx = 0; let dy = 0;
+                if (keys['w'] || keys['arrowup']) dy -= 1;
+                if (keys['s'] || keys['arrowdown']) dy += 1;
+                if (keys['a'] || keys['arrowleft']) dx -= 1;
+                if (keys['d'] || keys['arrowright']) dx += 1;
+
+                // Jika diam, dash ke arah hadapan saat ini
+                if (dx === 0 && dy === 0) {
+                    dx = Math.cos(this.angle);
+                    dy = Math.sin(this.angle);
+                } else {
+                    // Normalisasi vektor gerak
+                    let length = Math.hypot(dx, dy);
+                    dx /= length;
+                    dy /= length;
+                }
+
+                this.isDashing = true;
+                this.dashTimer = this.dashDuration;
+                this.dashDir = { x: dx, y: dy };
+                this.dashCooldown = this.dashCooldownMax;
+                this.invincibleTimer = 60; // Diberikan 1 detik perlindungan penuh di semua mode setelah dash dipicu
+                
+                createExplosion(this.x, this.y, '#9ca3af', 15, 2);
+            }
+
+            update() {
+                // Handle Timers
+                if (this.invincibleTimer > 0) this.invincibleTimer--;
+                if (this.dashCooldown > 0) this.dashCooldown--;
+                if (this.shootCooldown > 0) this.shootCooldown--;
+
+                // Movement Logic
+                if (this.isDashing) {
+                    this.x += this.dashDir.x * (this.speed * 2.5);
+                    this.y += this.dashDir.y * (this.speed * 2.5);
+                    this.dashTimer--;
+                    if (this.dashTimer <= 0) this.isDashing = false;
+                    
+                    // Tinggalkan jejak partikel bayangan dash
+                    if (gameFrame % 2 === 0) {
+                        particles.push(new Particle(this.x, this.y, 'rgba(156, 163, 175, 0.4)', 8, 0.04, 0));
+                    }
+                } else {
+                    let moveX = 0; let moveY = 0;
+                    if (keys['w'] || keys['arrowup']) moveY -= 1;
+                    if (keys['s'] || keys['arrowdown']) moveY += 1;
+                    if (keys['a'] || keys['arrowleft']) moveX -= 1;
+                    if (keys['d'] || keys['arrowright']) moveX += 1;
+
+                    if (moveX !== 0 && moveY !== 0) {
+                        moveX *= 0.7071;
+                        moveY *= 0.7071;
+                    }
+
+                    this.x += moveX * this.speed;
+                    this.y += moveY * this.speed;
+                }
+
+                // Batasan layar arena play
+                this.x = Math.max(this.radius + 10, Math.min(canvas.width - this.radius - 10, this.x));
+                this.y = Math.max(this.radius + 10, Math.min(canvas.height - this.radius - 10, this.y));
+
+                // Targeting & Angle Logic
+                if (selectedControl === CONTROL_MODES.MOUSE) {
+                    this.angle = Math.atan2(mouse.y - this.y, mouse.x - this.x);
+                    if (mouse.isDown && this.shootCooldown === 0) {
+                        this.shoot();
+                    }
+                } else {
+                    // NO MOUSE: Auto Target Bos atau Minion Terdekat
+                    let targetObj = boss;
+                    if (minions.length > 0) {
+                        let minDist = Infinity;
+                        for (let m of minions) {
+                            let d = Vector2.distance(this, m);
+                            if (d < minDist) { minDist = d; targetObj = m; }
+                        }
+                    }
+                    this.angle = Math.atan2(targetObj.y - this.y, targetObj.x - this.x);
+                    
+                    if ((keys[' '] || keys['spacebar']) && this.shootCooldown === 0) {
+                        this.shoot();
+                    }
+                }
+            }
+
+            shoot() {
+                projectiles.push(new Projectile(this.x, this.y, this.angle, true));
+                this.shootCooldown = this.shootCooldownMax;
+                
+                // Rekoil partikel kecil
+                particles.push(new Particle(this.x + Math.cos(this.angle)*12, this.y + Math.sin(this.angle)*12, '#4b5563', 2, 0.1, this.angle + Math.PI));
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle);
+
+                // Mengedip jika dalam status kebal/invincible
+                if (this.invincibleTimer > 0 && Math.floor(gameFrame / 4) % 2 === 0) {
+                    ctx.fillStyle = 'rgba(79, 70, 229, 0.2)';
+                } else {
+                    ctx.fillStyle = '#4f46e5'; 
+                }
+
+                ctx.strokeStyle = '#1e1b4b';
+                ctx.lineWidth = 3;
+                
+                // Bentuk Segitiga Pesawat Player Presisi
+                ctx.beginPath();
+                ctx.moveTo(this.radius + 4, 0);
+                ctx.lineTo(-this.radius, -this.radius + 2);
+                ctx.lineTo(-this.radius + 4, 0);
+                ctx.lineTo(-this.radius, this.radius - 2);
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+
+                // Lingkaran Inti Senjata Pistol
+                ctx.fillStyle = '#ffffff';
+                ctx.beginPath();
+                ctx.arc(this.radius - 2, 0, 4, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.restore();
+
+                // Efek Aura Kebal/Shield jika sedang I-Frame
+                if (this.invincibleTimer > 0) {
+                    ctx.strokeStyle = 'rgba(99, 102, 241, 0.6)';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.radius + 8, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+            }
+        }
+
+        // PROJECTILE CLASS (Peluru Player / Musuh)
+        class Projectile {
+            constructor(x, y, angle, isPlayer = false, customSpeed = null, color = null) {
+                this.x = x;
+                this.y = y;
+                this.angle = angle;
+                this.isPlayer = isPlayer;
+                this.radius = isPlayer ? 5 : 6;
+                this.speed = customSpeed ? customSpeed : (isPlayer ? 10 : 3.5);
+                this.color = color ? color : (isPlayer ? '#111827' : '#dc2626');
+                this.active = true;
+            }
+
+            update() {
+                this.x += Math.cos(this.angle) * this.speed;
+                this.y += Math.sin(this.angle) * this.speed;
+
+                // Cek Out of bounds layar
+                if (this.x < -20 || this.x > canvas.width + 20 || this.y < -20 || this.y > canvas.height + 20) {
+                    this.active = false;
+                }
+            }
+
+            draw() {
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Tambahkan stroke luar agar kontrasnya makin tajam di layar cerah
+                ctx.strokeStyle = '#1f2937';
+                ctx.lineWidth = 1;
+                ctx.stroke();
+            }
+        }
+
+        // MINION HEXAGON CLASS (Untuk Bos: The Mother)
+        class Minion {
+            constructor(x, y, index, parent) {
+                this.parent = parent;
+                this.index = index;
+                this.radius = 16;
+                this.hp = 3;
+                this.orbitRadius = 120;
+                this.orbitAngle = (Math.PI * 2 / 6) * index;
+                this.x = x;
+                this.y = y;
+                this.shootTimer = Math.floor(Math.random() * 60);
+            }
+
+            update() {
+                // Selalu berputar mengelilingi koordinat inti The Mother
+                this.orbitAngle += 0.015;
+                this.x = this.parent.x + Math.cos(this.orbitAngle) * this.orbitRadius;
+                this.y = this.parent.y + Math.sin(this.orbitAngle) * this.orbitRadius;
+
+                // Tembak secara berkala ke arah koordinat player
+                this.shootTimer++;
+                if (this.shootTimer >= 140) {
+                    let angleToPlayer = Math.atan2(player.y - this.y, player.x - this.x);
+                    bossProjectiles.push(new Projectile(this.x, this.y, angleToPlayer, false, 2.5, '#b91c1c'));
+                    this.shootTimer = 0;
+                }
+            }
+
+            takeDamage() {
+                this.hp--;
+                createExplosion(this.x, this.y, '#d97706', 10, 2);
+                if (this.hp <= 0) {
+                    createExplosion(this.x, this.y, '#b45309', 20, 3);
+                    return false; // Hapus minion ini dari himpunan array aktif
+                }
+                return true;
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(gameFrame * 0.02);
+                
+                ctx.fillStyle = '#f59e0b';
+                ctx.strokeStyle = '#78350f';
+                ctx.lineWidth = 3;
+                
+                // Prosedural Menggambar Bentuk Geometris Hexagon Sempurna
+                ctx.beginPath();
+                for (let i = 0; i < 6; i++) {
+                    let angle = (Math.PI * 2 / 6) * i;
+                    ctx.lineTo(Math.cos(angle) * this.radius, Math.sin(angle) * this.radius);
+                }
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+                
+                ctx.restore();
+            }
+        }
+
+        // BOSS BASE CLASS & MECHANICS
+        class Boss {
+            constructor(type) {
+                this.type = type; // vortex, wall, mother
+                this.x = canvas.width / 2;
+                this.y = canvas.height / 2 - 50;
+                this.maxHp = 100;
+                this.hp = this.maxHp;
+                
+                this.state = 'APPEAR'; // APPEAR, ATTACKING, STUNNED, TELEPORTING
+                this.stateTimer = 120; // Waktu tunggu awal kemunculan bos
+                
+                this.maxStamina = 600; // 10 detik serangan berturut-turut sebelum pegal
+                this.stamina = this.maxStamina;
+                
+                // Status Keabalan/Immortality Bawaan Sesuai Desain
+                this.isImmortal = true; 
+                
+                this.teleportTarget = null;
+                this.attackPatternIndex = 0;
+                this.motherAOETrigger = false;
+                
+                // Inisialisasi Spesifik untuk Bos Tertentu
+                if (type === 'vortex') {
+                    this.radius = 45;
+                    this.name = "THE VORTEX";
+                } else if (type === 'wall') {
+                    this.radius = 40;
+                    this.name = "THE WALL";
+                } else if (type === 'mother') {
+                    this.radius = 50;
+                    this.name = "THE MOTHER";
+                    this.spawnMinions();
+                }
+            }
+
+            spawnMinions() {
+                minions = [];
+                for(let i = 0; i < 6; i++) {
+                    minions.push(new Minion(this.x, this.y, i, this));
+                }
+            }
+
+            takeDamage(amount) {
+                if (this.isImmortal) {
+                    // Pemicu partikel pantulan tameng pertahanan absolut
+                    createExplosion(player.x, player.y, '#9ca3af', 2, 1);
+                    return false; 
+                }
+                
+                this.hp -= amount;
+                createExplosion(this.x, this.y, '#ef4444', 8, 3);
+                updateHudUI();
+
+                if (this.hp <= 0) {
+                    triggerVictory();
+                    return true;
+                }
+                return false;
+            }
+
+            update() {
+                switch (this.state) {
+                    case 'APPEAR':
+                        this.stateTimer--;
+                        if (this.stateTimer <= 0) {
+                            this.state = 'ATTACKING';
+                            this.stamina = this.maxStamina;
+                            this.isImmortal = true;
+                        }
+                        break;
+
+                    case 'ATTACKING':
+                        this.stamina--;
+                        updateHudUI();
+                        
+                        // Eksekusi variasi pola tembakan proyektil bos
+                        this.executeAttacks();
+
+                        // Pemicu acak berkala untuk eksekusi relokasi/teleportasi taktis
+                        if (this.stamina > 100 && this.stamina % 180 === 0) {
+                            this.initiateTeleport();
+                        }
+
+                        // Jendela Bos Capek/Pegal setelah menghabiskan stamina pertahanan
+                        if (this.stamina <= 0) {
+                            if (this.type === 'mother' && minions.length > 0) {
+                                // Khusus The Mother, tidak bisa lelah/stun jika anak buah minion masih tersisa di arena
+                                this.stamina = 60; // Tunda sedikit siklusnya
+                            } else {
+                                this.state = 'STUNNED';
+                                this.stateTimer = 240; // Durasi stun pingsan/lelah selama 4 Detik penuh
+                                this.isImmortal = false; // Buka proteksi pertahanan bos agar bisa dilukai player!
+                                updateHudUI();
+                                createExplosion(this.x, this.y, '#3b82f6', 40, 5);
+                            }
+                        }
+                        break;
+
+                    case 'STUNNED':
+                        this.stateTimer--;
+                        updateHudUI();
+                        
+                        // Buat getaran visual lelah/lemas pada bos saat fase stun
+                        this.x += Math.sin(gameFrame * 2) * 0.8;
+                        
+                        if (this.stateTimer <= 0) {
+                            this.state = 'ATTACKING';
+                            this.stamina = this.maxStamina;
+                            this.isImmortal = true;
+                            if (this.type === 'mother') this.spawnMinions(); // Spawn ulang anak buah baru
+                            updateHudUI();
+                        }
+                        break;
+
+                    case 'TELEPORTING':
+                        this.stateTimer--;
+                        if (this.stateTimer <= 0) {
+                            // Eksekusi Pindah Tempat Instan Ke Koordinat Target Pilihan
+                            this.x = this.teleportTarget.x;
+                            this.y = this.teleportTarget.y;
+                            this.state = 'ATTACKING';
+                            this.isImmortal = true;
+                            
+                            // Pasca Teleportasi: Trigger Efek Spesifik Masing-Masing Karakter Bos
+                            this.triggerPostTeleportEffect();
+                        }
+                        break;
+                }
+            }
+
+            initiateTeleport() {
+                this.state = 'TELEPORTING';
+                this.stateTimer = 45; // 0.75 Detik waktu tunda tanda indikator maut sebelum instan pindah tempat
+                
+                // Tentukan koordinat target acak yang aman di dalam batas arena bermain
+                this.teleportTarget = {
+                    x: Math.random() * (canvas.width - 200) + 100,
+                    y: Math.random() * (canvas.height - 200) + 100
+                };
+            }
+
+            triggerPostTeleportEffect() {
+                if (this.type === 'vortex') {
+                    // Pola serangan kejutan 8 arah mata angin pasca-teleportasi
+                    for (let i = 0; i < 8; i++) {
+                        let angle = (Math.PI * 2 / 8) * i;
+                        bossProjectiles.push(new Projectile(this.x, this.y, angle, false, 4.5, '#dc2626'));
+                    }
+                } 
+                else if (this.type === 'wall') {
+                    // Pola serangan bentuk salib 4 penjuru tegak lurus
+                    for (let i = 0; i < 4; i++) {
+                        let angle = (Math.PI / 2) * i;
+                        bossProjectiles.push(new Projectile(this.x, this.y, angle, false, 5, '#991b1b'));
+                    }
+                } 
+                else if (this.type === 'mother') {
+                    // THE MOTHER: Memicu area ledakan AOE instan raksasa tanpa indikator (radius 180px)
+                    this.motherAOETrigger = true;
+                    createExplosion(this.x, this.y, 'rgba(17, 24, 39, 0.15)', 50, 8);
+                    
+                    // Cek jarak kerusakan langsung ke arah kordinat player
+                    let d = Vector2.distance(this, player);
+                    if (d < 180) {
+                        player.takeDamage();
+                    }
+                    
+                    // Hapus pemicu visual AOE setelah beberapa frame berjalan singkat
+                    setTimeout(() => { this.motherAOETrigger = false; }, 200);
+                }
+            }
+
+            executeAttacks() {
+                if (this.type === 'vortex') {
+                    // Spiral bullet berputar searah jarum jam dengan celah dinamis kecil
+                    let spinAngle = (gameFrame * 0.04) % (Math.PI * 2);
+                    if (gameFrame % 3 === 0) {
+                        // Lepaskan 3 poros peluru bercabang berputar
+                        for(let j = 0; j < 3; j++) {
+                            let finalAngle = spinAngle + (j * Math.PI * 2 / 3);
+                            bossProjectiles.push(new Projectile(this.x, this.y, finalAngle, false, 3.2, '#b91c1c'));
+                        }
+                    }
+                } 
+                else if (this.type === 'wall') {
+                    // Menciptakan hujan/tembok barisan peluru konvergen dari batas terluar peta arena
+                    // Semakin menipis stamina bos, akselerasi frekuensi kemunculan peluru semakin cepat
+                    let speedModifier = Math.floor((this.maxStamina - this.stamina) / 120);
+                    let spawnInterval = Math.max(15, 45 - speedModifier * 6);
+
+                    if (gameFrame % spawnInterval === 0) {
+                        let rGate = Math.floor(Math.random() * 4); // 0:Atas, 1:Bawah, 2:Kiri, 3:Kanan
+                        let gapPosition = Math.random() * (rGate < 2 ? canvas.width : canvas.height);
+                        
+                        if (rGate === 0) { // Dari batas atas layar turun ke bawah
+                            for (let x = 30; x < canvas.width; x += 50) {
+                                if (Math.abs(x - gapPosition) > 75) {
+                                    bossProjectiles.push(new Projectile(x, 0, Math.PI / 2, false, 2.5 + speedModifier*0.4, '#dc2626'));
+                                }
+                            }
+                        } else if (rGate === 1) { // Dari batas bawah layar naik ke atas
+                            for (let x = 30; x < canvas.width; x += 50) {
+                                if (Math.abs(x - gapPosition) > 75) {
+                                    bossProjectiles.push(new Projectile(x, canvas.height, -Math.PI / 2, false, 2.5 + speedModifier*0.4, '#dc2626'));
+                                }
+                            }
+                        } else if (rGate === 2) { // Dari batas kiri meluncur ke kanan
+                            for (let y = 30; y < canvas.height; y += 50) {
+                                if (Math.abs(y - gapPosition) > 75) {
+                                    bossProjectiles.push(new Projectile(0, y, 0, false, 2.5 + speedModifier*0.4, '#dc2626'));
+                                }
+                            }
+                        } else if (rGate === 3) { // Dari batas kanan meluncur ke kiri
+                            for (let y = 30; y < canvas.height; y += 50) {
+                                if (Math.abs(y - gapPosition) > 75) {
+                                    bossProjectiles.push(new Projectile(canvas.width, y, Math.PI, false, 2.5 + speedModifier*0.4, '#dc2626'));
+                                }
+                            }
+                        }
+                    }
+                } 
+                else if (this.type === 'mother') {
+                    // Mengeluarkan tembakan sekunder melambat dari posisi pusat hexagon bos utama
+                    if (gameFrame % 40 === 0) {
+                        let angleToPlayer = Math.atan2(player.y - this.y, player.x - this.x);
+                        // Tembakan kipas menyebar 3 arah
+                        bossProjectiles.push(new Projectile(this.x, this.y, angleToPlayer, false, 2, '#991b1b'));
+                        bossProjectiles.push(new Projectile(this.x, this.y, angleToPlayer - 0.25, false, 2, '#991b1b'));
+                        bossProjectiles.push(new Projectile(this.x, this.y, angleToPlayer + 0.25, false, 2, '#991b1b'));
+                    }
+                }
+            }
+
+            draw() {
+                // Tampilkan garis bantu indikator/tanda sinyal maut kemunculan teleportasi sebelum tiba
+                if (this.state === 'TELEPORTING' && this.teleportTarget) {
+                    ctx.save();
+                    ctx.strokeStyle = 'rgba(220, 38, 38, 0.8)';
+                    ctx.lineWidth = 3;
+                    ctx.setLineDash([6, 6]);
+                    
+                    // Efek lingkaran denyut target kedatangan bos
+                    ctx.beginPath();
+                    ctx.arc(this.teleportTarget.x, this.teleportTarget.y, this.radius, 0, Math.PI * 2);
+                    ctx.stroke();
+                    
+                    // Garis bidik silang pengunci target koordinat
+                    ctx.beginPath();
+                    ctx.moveTo(this.teleportTarget.x - this.radius - 10, this.teleportTarget.y);
+                    ctx.lineTo(this.teleportTarget.x + this.radius + 10, this.teleportTarget.y);
+                    ctx.moveTo(this.teleportTarget.x, this.teleportTarget.y - this.radius - 10);
+                    ctx.lineTo(this.teleportTarget.x, this.teleportTarget.y + this.radius + 10);
+                    ctx.stroke();
+                    ctx.restore();
+                }
+
+                if (this.state === 'TELEPORTING') return; // Sembunyikan sprite saat di tengah-tengah relokasi fungsional
+
+                // Render Visual Ledakan Flash AOE Rahasia Milik The Mother
+                if (this.type === 'mother' && this.motherAOETrigger) {
+                    ctx.fillStyle = 'rgba(220, 38, 38, 0.15)';
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, 180, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                
+                // Rotasi konstan estetik untuk mempercantik aset mekanis bos
+                if (this.type === 'vortex') ctx.rotate(gameFrame * 0.02);
+                else if (this.type === 'wall') ctx.rotate(gameFrame * 0.005);
+                else ctx.rotate(-gameFrame * 0.01);
+
+                // Penentuan warna kulit dasar berdasarkan status proteksi absolut
+                if (this.state === 'STUNNED') {
+                    ctx.fillStyle = '#93c5fd'; // Biru Lemas / Terbuka dari Armor
+                    ctx.strokeStyle = '#2563eb';
+                } else {
+                    ctx.fillStyle = '#1f2937'; // Hitam Pekat Armor Abadi
+                    ctx.strokeStyle = '#dc2626';
+                }
+                ctx.lineWidth = 5;
+
+                // Eksekusi Render Sesuai Tipe Geometris Desain yang Diminta
+                if (this.type === 'vortex') {
+                    ctx.beginPath();
+                    ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.stroke();
+                    
+                    // Ornamen dalam pusaran
+                    ctx.strokeStyle = this.state === 'STUNNED' ? '#60a5fa' : '#ef4444';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.arc(0, 0, this.radius - 16, 0, Math.PI, true);
+                    ctx.stroke();
+                } 
+                else if (this.type === 'wall') {
+                    ctx.beginPath();
+                    ctx.rect(-this.radius, -this.radius, this.radius * 2, this.radius * 2);
+                    ctx.fill();
+                    ctx.stroke();
+                    
+                    // Ornamen kotak sekunder
+                    ctx.strokeStyle = this.state === 'STUNNED' ? '#60a5fa' : '#ef4444';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(-this.radius + 10, -this.radius + 10, (this.radius - 10) * 2, (this.radius - 10) * 2);
+                } 
+                else if (this.type === 'mother') {
+                    ctx.beginPath();
+                    for (let i = 0; i < 6; i++) {
+                        let angle = (Math.PI * 2 / 6) * i;
+                        ctx.lineTo(Math.cos(angle) * this.radius, Math.sin(angle) * this.radius);
+                    }
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.stroke();
+
+                    // Inti tengah Hexagon
+                    ctx.fillStyle = this.state === 'STUNNED' ? '#3b82f6' : '#b91c1c';
+                    ctx.beginPath();
+                    ctx.arc(0, 0, 14, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+
+                ctx.restore();
+            }
+        }
+
+        // PARTICLE EFFECT SYSTEM
+        class Particle {
+            constructor(x, y, color, speedFactor = 5, decay = 0.03, fixedAngle = null) {
+                this.x = x;
+                this.y = y;
+                this.color = color;
+                let ang = fixedAngle !== null ? fixedAngle : Math.random() * Math.PI * 2;
+                let spd = (Math.random() * 0.7 + 0.3) * speedFactor;
+                this.vx = Math.cos(ang) * spd;
+                this.vy = Math.sin(ang) * spd;
+                this.alpha = 1;
+                this.decay = decay;
+                this.radius = Math.random() * 3 + 2;
+            }
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                this.alpha -= this.decay;
+                return this.alpha > 0;
+            }
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = this.alpha;
+                ctx.fillStyle = this.color;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
+        }
+
+        function createExplosion(x, y, color, count, speedFactor) {
+            for (let i = 0; i < count; i++) {
+                particles.push(new Particle(x, y, color, speedFactor));
+            }
+        }
+
+        // SYSTEMS & HANDLERS INTERAKSI KONTROL
+        window.addEventListener('keydown', (e) => {
+            let k = e.key.toLowerCase();
+            keys[k] = true;
+            if (k === ' ') keys['spacebar'] = true;
+
+            // Integrasi pemicu dash menggunakan keyboard untuk No-Mouse Mode
+            if (k === 'j' && selectedControl === CONTROL_MODES.NO_MOUSE) {
+                if (currentState === GAME_STATE.PLAYING) player.dash();
+            }
+        });
+
+        window.addEventListener('keyup', (e) => {
+            let k = e.key.toLowerCase();
+            keys[k] = false;
+            if (k === ' ') keys['spacebar'] = false;
+        });
+
+        canvas.addEventListener('mousemove', (e) => {
+            let rect = canvas.getBoundingClientRect();
+            mouse.x = e.clientX - rect.left;
+            mouse.y = e.clientY - rect.top;
+        });
+
+        canvas.addEventListener('mousedown', (e) => {
+            if (e.button === 0) mouse.isDown = true;
+            
+            // Integrasi klik kanan untuk Dash khusus Mouse Mode
+            if (e.button === 2 && selectedControl === CONTROL_MODES.MOUSE) {
+                if (currentState === GAME_STATE.PLAYING) player.dash();
+            }
+        });
+
+        canvas.addEventListener('mouseup', (e) => {
+            if (e.button === 0) mouse.isDown = false;
+        });
+
+        // Blokir Menu Klik Kanan bawaan browser agar kontrol game tidak terganggu
+        canvas.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
+        });
+
+        // UI INTERACTION SCRIPTS
+        document.getElementById('toggle-control').addEventListener('click', () => {
+            if (selectedControl === CONTROL_MODES.MOUSE) {
+                selectedControl = CONTROL_MODES.NO_MOUSE;
+                document.getElementById('toggle-control').innerText = "NO MOUSE (AUTO)";
+                document.getElementById('toggle-control').className = "badge active-mode";
+                document.getElementById('menu-controls-hint').innerHTML = "Aksi: Gerak [WASD / Arah Panah], Tembak [Tahan SPASI], Meluncur/Dash [Tombol J]";
+            } else {
+                selectedControl = CONTROL_MODES.MOUSE;
+                document.getElementById('toggle-control').innerText = "MOUSE";
+                document.getElementById('toggle-control').className = "badge active-mode";
+                document.getElementById('menu-controls-hint').innerHTML = "Aksi: Gerak [WASD], Bidik [Mouse], Tembak [Klik Kiri], Meluncur/Dash [Klik Kanan]";
+            }
+        });
+
+        document.getElementById('toggle-difficulty').addEventListener('click', () => {
+            if (selectedDifficulty === DIFFICULTIES.EASY) {
+                selectedDifficulty = DIFFICULTIES.NORMAL;
+                document.getElementById('toggle-difficulty').innerText = "NORMAL (2 HP)";
+            } else if (selectedDifficulty === DIFFICULTIES.NORMAL) {
+                selectedDifficulty = DIFFICULTIES.HELL;
+                document.getElementById('toggle-difficulty').innerText = "HELL (1 HIT MATI)";
+            } else {
+                selectedDifficulty = DIFFICULTIES.EASY;
+                document.getElementById('toggle-difficulty').innerText = "EASY (3 HP)";
+            }
+        });
+
+        document.getElementById('btn-to-boss-select').addEventListener('click', () => {
+            switchScreen(GAME_STATE.BOSS_SELECT);
+        });
+
+        document.getElementById('btn-back-to-menu').addEventListener('click', () => {
+            switchScreen(GAME_STATE.MENU);
+        });
+
+        document.querySelectorAll('.btn-boss').forEach(button => {
+            button.addEventListener('click', (e) => {
+                currentBossType = button.getAttribute('data-boss');
+                startGame();
+            });
+        });
+
+        document.getElementById('btn-retry').addEventListener('click', startGame);
+        document.getElementById('btn-fail-menu').addEventListener('click', () => switchScreen(GAME_STATE.MENU));
+        document.getElementById('btn-victory-continue').addEventListener('click', () => switchScreen(GAME_STATE.BOSS_SELECT));
+        document.getElementById('btn-victory-menu').addEventListener('click', () => switchScreen(GAME_STATE.MENU));
+
+        function switchScreen(state) {
+            currentState = state;
+            document.querySelectorAll('.screen, #hud').forEach(el => el.classList.add('hidden'));
+
+            if (state === GAME_STATE.MENU) document.getElementById('menu-screen').classList.remove('hidden');
+            else if (state === GAME_STATE.BOSS_SELECT) document.getElementById('boss-select-screen').classList.remove('hidden');
+            else if (state === GAME_STATE.GAMEOVER) document.getElementById('game-over-screen').classList.remove('hidden');
+            else if (state === GAME_STATE.VICTORY) document.getElementById('victory-screen').classList.remove('hidden');
+            else if (state === GAME_STATE.PLAYING) document.getElementById('hud').classList.remove('hidden');
+        }
+
+        // GAME CORE ENGINE FUNCTIONS
+        function startGame() {
+            gameFrame = 0;
+            projectiles = [];
+            bossProjectiles = [];
+            minions = [];
+            particles = [];
+            mouse.isDown = false;
+
+            player = new Player(canvas.width / 2, canvas.height * 0.75);
+            boss = new Boss(currentBossType);
+
+            // Perbarui kelayakan teks informasi judul pada HUD panel kanan
+            document.getElementById('boss-name-hud').innerText = boss.name;
+            
+            updateHudUI();
+            switchScreen(GAME_STATE.PLAYING);
+        }
+
+        function updateHudUI() {
+            if (!player || !boss) return;
+
+            // Render komponen grafis HP bar jantung hati
+            let container = document.getElementById('player-hp-container');
+            container.innerHTML = '';
+            for (let i = 0; i < player.hp; i++) {
+                container.innerHTML += '<span class="hp-heart">❤️</span>';
+            }
+            if(player.hp === 0) container.innerHTML = '<span style="font-size:0.9rem; font-weight:700; color:#ef4444;">CRITICAL</span>';
+
+            // Sinkronisasi bar data bos
+            let bHpPerc = Math.max(0, (boss.hp / boss.maxHp) * 100);
+            document.getElementById('boss-hp-bar').style.width = bHpPerc + '%';
+
+            let bStamPerc = Math.max(0, (boss.stamina / boss.maxStamina) * 100);
+            document.getElementById('boss-stamina-bar').style.width = bStamPerc + '%';
+
+            // Indikasi teks kenyamanan status kebal bos
+            let statusText = document.getElementById('boss-status-text');
+            if (boss.state === 'STUNNED') {
+                statusText.innerText = "PEGAL / STUNNED (SERANG SEKARANG!)";
+                statusText.style.color = "#2563eb";
+            } else if (boss.state === 'APPEAR') {
+                statusText.innerText = "MEMPERSIAPKAN DIRI";
+                statusText.style.color = "#4b5563";
+            } else if (boss.state === 'TELEPORTING') {
+                statusText.innerText = "ALIRAN RELOKASI";
+                statusText.style.color = "#d97706";
+            } else {
+                statusText.innerText = "IMMORTAL (KEBAL SERANGAN)";
+                statusText.style.color = "#dc2626";
+            }
+        }
+
+        function triggerGameOver(reason) {
+            document.getElementById('game-over-reason').innerText = reason;
+            switchScreen(GAME_STATE.GAMEOVER);
+        }
+
+        function triggerVictory() {
+            switchScreen(GAME_STATE.VICTORY);
+        }
+
+        // ENGINE LOOP UPDATE
+        function updateGame() {
+            if (currentState !== GAME_STATE.PLAYING) return;
+
+            gameFrame++;
+
+            // Update Siklus Player & Status Pengisian Dash Cooldown HUD
+            player.update();
+            let dashCooldownText = document.getElementById('hud-dash-cooldown');
+            if (player.dashCooldown > 0) {
+                dashCooldownText.innerText = "DASH COOLDOWN: " + Math.ceil(player.dashCooldown / 60 * 10) / 10 + "s";
+                dashCooldownText.style.color = "#ef4444";
+            } else {
+                dashCooldownText.innerText = "DASH: READY";
+                dashCooldownText.style.color = "#059669";
+            }
+
+            // Update Siklus Kepintaran Bos Utama
+            boss.update();
+
+            // Update Pergerakan Seluruh Minion Pengikut
+            for (let i = minions.length - 1; i >= 0; i--) {
+                minions[i].update();
+            }
+
+            // Update Pergerakan Seluruh Peluru Tembakan Player
+            for (let i = projectiles.length - 1; i >= 0; i--) {
+                let p = projectiles[i];
+                p.update();
+
+                // Deteksi benturan peluru player dengan barisan minion terlebih dahulu
+                let hitSomething = false;
+                if (minions.length > 0) {
+                    for (let m = minions.length - 1; m >= 0; m--) {
+                        if (Vector2.distance(p, minions[m]) < p.radius + minions[m].radius) {
+                            let alive = minions[m].takeDamage();
+                            if (!alive) minions.splice(m, 1);
+                            hitSomething = true;
+                            break;
+                        }
+                    }
+                }
+
+                // Deteksi benturan langsung ke area tubuh boss utama
+                if (!hitSomething && Vector2.distance(p, boss) < p.radius + boss.radius && boss.state !== 'TELEPORTING') {
+                    boss.takeDamage(1); // Kurangi darah bos sebanyak 1 poin perhit peluru pistol
+                    hitSomething = true;
+                }
+
+                if (hitSomething || !p.active) {
+                    projectiles.splice(i, 1);
+                }
+            }
+
+            // Update Pergerakan Seluruh Peluru Serangan Milik Bos / Minion
+            for (let i = bossProjectiles.length - 1; i >= 0; i--) {
+                let bp = bossProjectiles[i];
+                bp.update();
+
+                // Deteksi Tabrakan Fisik Langsung Ke Titik Player
+                if (Vector2.distance(bp, player) < bp.radius + player.radius) {
+                    if (!player.isDashing && player.invincibleTimer === 0) {
+                        player.takeDamage();
+                        bossProjectiles.splice(i, 1);
+                        continue;
+                    }
+                }
+
+                if (!bp.active) {
+                    bossProjectiles.splice(i, 1);
+                }
+            }
+
+            // Update Siklus Efek Partikel Estetis Sekunder
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let active = particles[i].update();
+                if (!active) particles.splice(i, 1);
+            }
+        }
+
+        // ENGINE LOOP RENDER GRAPHICS
+        function renderGame() {
+            // Bersihkan frame kanvas lama dengan warna dasar abu-abu keputihan bersih kontras tinggi
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            if (currentState !== GAME_STATE.PLAYING && currentState !== GAME_STATE.GAMEOVER && currentState !== GAME_STATE.VICTORY) return;
+
+            // Gambar Garis Pembatas Arena Bermain Minimalis di Sisi Pinggir Kanvas
+            ctx.strokeStyle = '#e5e7eb';
+            ctx.lineWidth = 12;
+            ctx.strokeRect(0, 0, canvas.width, canvas.height);
+
+            // Render Komponen Seluruh Peluru Player
+            for (let p of projectiles) p.draw();
+
+            // Render Komponen Seluruh Peluru Bos
+            for (let bp of bossProjectiles) bp.draw();
+
+            // Render Seluruh Minion Pengawal yang Tersisa
+            for (let m of minions) m.draw();
+
+            // Render Bos Utama
+            boss.draw();
+
+            // Render Karakter Player
+            player.draw();
+
+            // Render Seluruh Efek Ledakan Partikel
+            for (let part of particles) part.draw();
+        }
+
+        // UTAMA LOOPING JALUR TICK GAMEPLAY
+        function gameLoop() {
+            updateGame();
+            renderGame();
+            requestAnimationFrame(gameLoop);
+        }
+
+        // Jalankan Inisialisasi loop engine pertama kali saat dokumen siap
+        gameLoop();
+    </script>
+</body>
+</html>
