@@ -3,11 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stun Bound: Boss Dodger</title>
+    <title>Stun Bound: Boss Dodger - Final Light Edition</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap');
+        /* ==========================================================================
+           1. IMPORT FONTS & CSS RESET
+           ========================================================================== */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 
-        * {
+        *, *::before, *::after {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
@@ -15,9 +18,12 @@
             font-family: 'Inter', sans-serif;
         }
         
+        /* ==========================================================================
+           2. GLOBAL BODY STYLES (LIGHT THEME)
+           ========================================================================== */
         body {
-            background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
-            color: #1f2937;
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            color: #0f172a;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -25,20 +31,25 @@
             overflow: hidden;
         }
 
+        /* ==========================================================================
+           3. MAIN GAME CONTAINER
+           ========================================================================== */
         #game-container {
             position: relative;
             width: 960px;
             height: 640px;
-            background-color: #f9fafb;
-            /* Tambahan pola grid estetik untuk membantu visual dodge pemain */
-            background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
-            background-size: 25px 25px;
-            border: 4px solid #fff;
-            border-radius: 20px;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25), 0 0 0 10px rgba(255,255,255,0.4);
+            background-color: #ffffff;
+            background-image: radial-gradient(#cbd5e1 1.5px, transparent 1.5px);
+            background-size: 30px 30px;
+            border: 4px solid #cbd5e1;
+            border-radius: 24px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15), 0 0 0 12px rgba(255, 255, 255, 0.5);
             overflow: hidden;
         }
 
+        /* ==========================================================================
+           4. SCREENS & OVERLAYS
+           ========================================================================== */
         .screen {
             position: absolute;
             top: 0;
@@ -49,140 +60,196 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            background: rgba(243, 244, 246, 0.95);
-            backdrop-filter: blur(10px);
+            background: rgba(248, 250, 252, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             z-index: 10;
-            transition: opacity 0.3s ease, transform 0.3s ease;
+            transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             padding: 40px;
         }
 
         .hidden {
             opacity: 0;
             pointer-events: none;
-            transform: scale(0.98);
+            transform: scale(1.02);
+            visibility: hidden;
         }
 
+        /* ==========================================================================
+           5. TYPOGRAPHY
+           ========================================================================== */
         h1 {
-            font-size: 4rem;
+            font-size: 4.5rem;
             font-weight: 900;
-            background: linear-gradient(to right, #111827, #374151);
+            background: linear-gradient(to right, #1e293b, #334155, #475569);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            letter-spacing: -2px;
-            margin-bottom: 10px;
+            letter-spacing: -3px;
+            margin-bottom: 8px;
             text-transform: uppercase;
-            text-shadow: 0px 4px 10px rgba(0,0,0,0.1);
+            text-shadow: 0px 4px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        h2 {
+            font-size: 3rem;
+            font-weight: 900;
+            margin-bottom: 25px;
+            text-transform: uppercase;
+            color: #0f172a;
+            letter-spacing: -1px;
         }
 
         .subtitle {
             font-size: 1.1rem;
-            color: #4b5563;
-            margin-bottom: 40px;
+            color: #475569;
+            margin-bottom: 35px;
             text-align: center;
-            max-width: 650px;
+            max-width: 680px;
             line-height: 1.6;
-            font-weight: 400;
+            font-weight: 500;
         }
 
+        .subtitle strong {
+            color: #ef4444;
+            font-weight: 800;
+        }
+
+        /* ==========================================================================
+           6. MENU SETTINGS & DROPDOWNS
+           ========================================================================== */
         .menu-group {
             display: flex;
             flex-direction: column;
-            gap: 15px;
+            gap: 20px;
             width: 100%;
-            max-width: 380px;
-            margin-bottom: 30px;
+            max-width: 440px;
+            margin-bottom: 35px;
         }
 
         .setting-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            background: rgba(255, 255, 255, 0.8);
-            padding: 15px 25px;
-            border-radius: 12px;
-            border: 1px solid #e5e7eb;
+            background: #ffffff;
+            padding: 14px 24px;
+            border-radius: 14px;
+            border: 2px solid #e2e8f0;
             font-weight: 600;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-            transition: transform 0.2s;
+            transition: border-color 0.2s, transform 0.2s;
         }
         
         .setting-row:hover {
+            border-color: #cbd5e1;
             transform: translateY(-2px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
         }
 
-        .badge {
-            background-color: #4f46e5;
-            color: white;
-            padding: 6px 16px;
-            border-radius: 8px;
-            font-size: 0.9rem;
+        .setting-label {
+            color: #334155;
+            font-size: 0.95rem;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
             font-weight: 800;
-            cursor: pointer;
-            transition: all 0.2s;
-            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
         }
-        .badge:hover { filter: brightness(1.1); }
-        .badge.active-mode { background-color: #059669; box-shadow: 0 0 10px rgba(5, 150, 105, 0.4); }
-        .badge.active-diff { background-color: #ef4444; box-shadow: 0 0 10px rgba(239, 68, 68, 0.4); }
 
+        .custom-select {
+            background-color: #f1f5f9;
+            color: #0f172a;
+            border: 2px solid #cbd5e1;
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.2s ease;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+            min-width: 200px;
+        }
+
+        .custom-select:focus {
+            border-color: #3b82f6;
+            background-color: #ffffff;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        }
+
+        /* ==========================================================================
+           7. BUTTONS
+           ========================================================================== */
         .btn {
-            background: linear-gradient(135deg, #1f2937, #111827);
+            background: linear-gradient(135deg, #1e293b, #0f172a);
             color: #ffffff;
             padding: 16px 32px;
             font-size: 1.1rem;
             font-weight: 800;
             border: none;
-            border-radius: 12px;
+            border-radius: 14px;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
             text-transform: uppercase;
             letter-spacing: 1px;
-            box-shadow: 0 10px 15px -3px rgba(31, 41, 55, 0.3);
+            box-shadow: 0 8px 15px rgba(15, 23, 42, 0.2);
         }
         
         .btn:hover {
             transform: translateY(-3px);
-            box-shadow: 0 15px 20px -3px rgba(31, 41, 55, 0.4);
+            box-shadow: 0 12px 20px rgba(15, 23, 42, 0.3);
+            background: linear-gradient(135deg, #334155, #1e293b);
         }
 
         .btn:active {
             transform: translateY(1px);
         }
 
+        .boss-list-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            justify-content: center;
+            width: 100%;
+            max-width: 800px;
+        }
+
         .btn-boss {
             background: #ffffff;
-            color: #1f2937;
-            border: 2px solid #e5e7eb;
-            width: 100%;
-            max-width: 450px;
-            margin: 10px 0;
+            color: #0f172a;
+            border: 2px solid #e2e8f0;
+            width: calc(50% - 10px);
             text-align: left;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 15px 25px;
+            padding: 16px 20px;
+            border-radius: 16px;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            cursor: pointer;
+            transition: all 0.25s ease;
         }
 
         .btn-boss:hover {
             background: #f8fafc;
-            border-color: #6366f1;
-            box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.15);
+            border-color: #3b82f6;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(59, 130, 246, 0.15);
         }
 
         .boss-shape-ico {
-            width: 30px;
-            height: 30px;
-            border: 4px solid #1f2937;
+            width: 32px;
+            height: 32px;
+            border: 4px solid #64748b;
             transition: all 0.3s;
+            flex-shrink: 0;
+            margin-left: 15px;
         }
         
         .btn-boss:hover .boss-shape-ico {
-            border-color: #6366f1;
-            transform: rotate(15deg) scale(1.1);
+            border-color: #3b82f6;
+            transform: rotate(25deg) scale(1.15);
         }
 
+        /* ==========================================================================
+           8. HUD & IN-GAME UI
+           ========================================================================== */
         #hud {
             position: absolute;
             top: 0;
@@ -198,16 +265,16 @@
         }
 
         .hud-panel {
-            background: rgba(255, 255, 255, 0.65);
-            backdrop-filter: blur(8px);
-            border: 1px solid rgba(255,255,255,0.5);
-            padding: 15px 20px;
-            border-radius: 16px;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            border: 2px solid #e2e8f0;
+            padding: 16px 22px;
+            border-radius: 18px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
         }
 
         .hp-heart {
-            font-size: 1.6rem;
+            font-size: 1.8rem;
             color: #ef4444;
             margin-right: 6px;
             filter: drop-shadow(0 2px 4px rgba(239, 68, 68, 0.3));
@@ -215,12 +282,13 @@
 
         .bar-container {
             width: 220px;
-            height: 14px;
-            background-color: #d1d5db;
-            border-radius: 7px;
+            height: 16px;
+            background-color: #e2e8f0;
+            border-radius: 8px;
             overflow: hidden;
             margin-top: 6px;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+            border: 1px solid #cbd5e1;
         }
 
         .bar-fill {
@@ -230,14 +298,17 @@
         }
 
         #boss-status-text {
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             font-weight: 900;
             text-transform: uppercase;
             letter-spacing: 1.5px;
             text-align: right;
-            margin-top: 2px;
+            margin-top: 4px;
         }
 
+        /* ==========================================================================
+           9. CANVAS HINTS & UTILS
+           ========================================================================== */
         #canvas {
             display: block;
             background-color: transparent;
@@ -246,136 +317,172 @@
         .controls-hint {
             margin-top: 25px;
             font-size: 0.9rem;
-            color: #6b7280;
+            color: #64748b;
             text-align: center;
             line-height: 1.6;
-            background: rgba(255,255,255,0.7);
+            background: #ffffff;
             padding: 15px 25px;
             border-radius: 12px;
-            border: 1px dashed #d1d5db;
+            border: 2px dashed #cbd5e1;
+            max-width: 550px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+        }
+
+        .pause-btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 300px;
         }
     </style>
 </head>
 <body>
 
     <div id="game-container">
-        <!-- HUD GAMEPLAY -->
+        
         <div id="hud" class="hidden">
             <div class="hud-panel">
-                <div style="font-weight: 900; font-size: 0.8rem; color: #4b5563; letter-spacing: 1px;">PLAYER HP</div>
-                <div id="player-hp-container" style="display: flex; margin-top: 4px;"></div>
-                <div style="font-weight: 800; font-size: 0.8rem; color: #6b7280; margin-top: 10px;" id="hud-dash-cooldown">DASH: READY</div>
+                <div style="font-weight: 900; font-size: 0.85rem; color: #64748b; letter-spacing: 1px;">PLAYER HEALTH</div>
+                <div id="player-hp-container" style="display: flex; margin-top: 6px; min-height: 35px; align-items: center;"></div>
+                <div style="font-weight: 800; font-size: 0.85rem; color: #475569; margin-top: 12px;" id="hud-dash-cooldown">DASH: READY</div>
             </div>
             
             <div class="hud-panel" style="align-items: flex-end; display: flex; flex-direction: column;">
-                <div id="boss-name-hud" style="font-weight: 900; font-size: 1.3rem; color: #111827; letter-spacing: -0.5px;">THE VORTEX</div>
-                <div id="boss-status-text" style="color: #dc2626;">IMMORTAL (ATTACKING)</div>
-                <div style="display: flex; gap: 15px; margin-top: 8px;">
+                <div id="boss-name-hud" style="font-weight: 900; font-size: 1.4rem; color: #0f172a; letter-spacing: -0.5px;">BOS</div>
+                <div id="boss-status-text" style="color: #ef4444;">IMMORTAL</div>
+                <div style="display: flex; gap: 20px; margin-top: 12px;">
                     <div>
-                        <div style="font-size: 0.75rem; font-weight: 800; color: #4b5563; text-align: right; letter-spacing: 0.5px;">BOSS HP</div>
-                        <div class="bar-container"><div id="boss-hp-bar" class="bar-fill" style="background: linear-gradient(90deg, #dc2626, #ef4444);"></div></div>
+                        <div style="font-size: 0.75rem; font-weight: 800; color: #64748b; text-align: right; letter-spacing: 0.5px;">BOSS INTEGRITY</div>
+                        <div class="bar-container"><div id="boss-hp-bar" class="bar-fill" style="background: linear-gradient(90deg, #ef4444, #f87171);"></div></div>
                     </div>
                     <div>
-                        <div style="font-size: 0.75rem; font-weight: 800; color: #4b5563; text-align: right; letter-spacing: 0.5px;">STAMINA</div>
-                        <div class="bar-container"><div id="boss-stamina-bar" class="bar-fill" style="background: linear-gradient(90deg, #2563eb, #3b82f6);"></div></div>
+                        <div style="font-size: 0.75rem; font-weight: 800; color: #64748b; text-align: right; letter-spacing: 0.5px;">STAMINA / ENERGY</div>
+                        <div class="bar-container"><div id="boss-stamina-bar" class="bar-fill" style="background: linear-gradient(90deg, #3b82f6, #60a5fa);"></div></div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- CANVAS UTAMA -->
         <canvas id="canvas" width="960" height="640"></canvas>
 
-        <!-- MAIN MENU SCREEN -->
         <div id="menu-screen" class="screen">
             <h1>STUN BOUND</h1>
-            <p class="subtitle">Bos sepenuhnya <strong>Kebal (Immortal)</strong> saat menyerang.<br>Hindari badai serangan mereka, tunggu hingga mereka lelah (stun), lalu hantam!</p>
+            <p class="subtitle">Musuh sepenuhnya <strong>Kebal (Immortal)</strong> ketika melancarkan serangan.<br>Bertahan hidup dari badai peluru, tunggu energi mereka habis, lalu lancarkan serangan balasan!</p>
             
             <div class="menu-group">
                 <div class="setting-row">
-                    <span>KONTROL:</span>
-                    <span id="toggle-control" class="badge active-mode">MOUSE</span>
+                    <span class="setting-label">Skema Kontrol:</span>
+                    <select id="select-control" class="custom-select">
+                        <option value="MOUSE">Mouse & Keyboard</option>
+                        <option value="NO_MOUSE">Keyboard Only (Auto-Aim)</option>
+                    </select>
                 </div>
                 <div class="setting-row">
-                    <span>KESULITAN:</span>
-                    <span id="toggle-difficulty" class="badge active-diff">NORMAL (2 HP)</span>
+                    <span class="setting-label">Kesulitan:</span>
+                    <select id="select-difficulty" class="custom-select">
+                        <option value="EASY" selected>Easy (3 Nyawa)</option>
+                        <option value="NORMAL">Normal (2 Nyawa)</option>
+                        <option value="HELL">Hell (1 Hit Mati)</option>
+                        <option value="NIGHTMARE">Nightmare (Sangat Brutal)</option>
+                    </select>
                 </div>
             </div>
 
-            <button class="btn" id="btn-to-boss-select" style="width: 100%; max-width: 380px;">Pilih Target Bos</button>
+            <button class="btn" id="btn-to-boss-select" style="width: 100%; max-width: 440px;">Menuju Pemilihan Bos</button>
             <div class="controls-hint" id="menu-controls-hint">
-                <strong>Aksi:</strong> Gerak [WASD], Bidik [Mouse], Tembak [Klik Kiri/Tahan], Dash [Klik Kanan]<br>
-                <em>*Dash memberikan perlindungan kebal selama 1 detik penuh.</em>
+                <strong>Aksi Utama:</strong> Gerak [WASD], Bidik [Arahkan Mouse], Tembak [Tahan Klik Kiri], Dash [Klik Kanan]<br>
+                <em>*Catatan: Pause Game gunakan tombol [ESC]</em>
             </div>
         </div>
 
-        <!-- BOSS SELECT SCREEN -->
         <div id="boss-select-screen" class="screen hidden">
-            <h2 style="font-size: 2.2rem; font-weight: 900; margin-bottom: 25px; text-transform: uppercase; color: #111827;">Pilih Tantangan Bos</h2>
+            <h2 style="color: #0f172a; font-size: 2.2rem; margin-bottom: 20px;">Otorisasi Target Perang</h2>
             
-            <button class="btn btn-boss" data-boss="vortex">
-                <div>
-                    <strong style="display:block; font-size:1.15rem;">1. The Vortex</strong>
-                    <span style="font-size:0.85rem; color:#6b7280;">Badai peluru melingkar berputar.</span>
-                </div>
-                <div class="boss-shape-ico" style="border-radius: 50%;"></div>
-            </button>
+            <div class="boss-list-container">
+                <button class="btn btn-boss" data-boss="vortex">
+                    <div>
+                        <strong style="display:block; font-size:1.1rem; color:#0f172a;">1. The Vortex v2.0</strong>
+                        <span style="font-size:0.8rem; color:#64748b;">Pusaran tak henti di tengah arena.</span>
+                    </div>
+                    <div class="boss-shape-ico" style="border-radius: 50%;"></div>
+                </button>
 
-            <button class="btn btn-boss" data-boss="wall">
-                <div>
-                    <strong style="display:block; font-size:1.15rem;">2. The Wall</strong>
-                    <span style="font-size:0.85rem; color:#6b7280;">Kurungan peluru konvergen dari segala sisi.</span>
-                </div>
-                <div class="boss-shape-ico"></div>
-            </button>
+                <button class="btn btn-boss" data-boss="wall">
+                    <div>
+                        <strong style="display:block; font-size:1.1rem; color:#0f172a;">2. The Wall Matrix</strong>
+                        <span style="font-size:0.8rem; color:#64748b;">Memunculkan dinding jebakan mematikan.</span>
+                    </div>
+                    <div class="boss-shape-ico" style="border-radius: 6px;"></div>
+                </button>
 
-            <button class="btn btn-boss" data-boss="mother">
-                <div>
-                    <strong style="display:block; font-size:1.15rem;">3. The Mother</strong>
-                    <span style="font-size:0.85rem; color:#6b7280;">Pembuat minion hexagon & ledakan AOE.</span>
-                </div>
-                <div class="boss-shape-ico" style="clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); background: transparent; width:34px; height:34px;"></div>
-            </button>
+                <button class="btn btn-boss" data-boss="mother">
+                    <div>
+                        <strong style="display:block; font-size:1.1rem; color:#0f172a;">3. The Mother Hive</strong>
+                        <span style="font-size:0.8rem; color:#64748b;">Dilindungi Minion dengan serangan teleport.</span>
+                    </div>
+                    <div class="boss-shape-ico" style="clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%); background: transparent; width:34px; height:34px;"></div>
+                </button>
 
-            <button class="btn" id="btn-back-to-menu" style="background:#e5e7eb; color:#1f2937; margin-top:30px; font-size:0.95rem; padding:12px 24px; box-shadow:none;">Kembali</button>
+                <button class="btn btn-boss" data-boss="gear">
+                    <div>
+                        <strong style="display:block; font-size:1.1rem; color:#0f172a;">4. The Gear Assembler</strong>
+                        <span style="font-size:0.8rem; color:#64748b;">Kombinasi lemah dari seluruh mekanik.</span>
+                    </div>
+                    <div class="boss-shape-ico" style="border-radius: 50%; border-style: dashed;"></div>
+                </button>
+            </div>
+
+            <button class="btn" id="btn-back-to-menu" style="background:#e2e8f0; color:#0f172a; margin-top:35px; font-size:0.95rem; padding:12px 28px; box-shadow:none;">Kembali ke Menu Utama</button>
         </div>
 
-        <!-- GAME OVER SCREEN -->
-        <div id="game-over-screen" class="screen hidden">
-            <h2 style="font-size: 4rem; font-weight: 900; color: #ef4444; margin-bottom: 10px; text-shadow: 0 4px 10px rgba(239, 68, 68, 0.2);">KAMU TEWAS!</h2>
-            <p class="subtitle" id="game-over-reason">Terlalu banyak terkena hantaman peluru tanpa pelindung.</p>
-            <div style="display: flex; gap: 20px; margin-top: 10px;">
-                <button class="btn" id="btn-retry">Coba Lagi</button>
-                <button class="btn" id="btn-fail-menu" style="background:#e5e7eb; color:#1f2937; box-shadow:none;">Menu Utama</button>
+        <div id="pause-screen" class="screen hidden">
+            <h2 style="font-size: 4rem; color: #1e293b; text-shadow: 0 4px 10px rgba(0,0,0,0.1);">GAME PAUSED</h2>
+            <p class="subtitle">Sistem sedang dihentikan sementara. Ambil napas, atur strategi.</p>
+            <div class="pause-btn-group">
+                <button class="btn" id="btn-resume-game" style="background: linear-gradient(135deg, #3b82f6, #2563eb);">Lanjutkan</button>
+                <button class="btn" id="btn-restart-game" style="background: linear-gradient(135deg, #10b981, #059669);">Mulai Ulang Level</button>
+                <button class="btn" id="btn-menu-from-pause" style="background: #e2e8f0; color: #0f172a; box-shadow: none;">Menu Utama</button>
             </div>
         </div>
 
-        <!-- VICTORY SCREEN -->
-        <div id="victory-screen" class="screen hidden">
-            <h2 style="font-size: 4rem; font-weight: 900; color: #059669; margin-bottom: 10px; text-shadow: 0 4px 10px rgba(5, 150, 105, 0.2);">BOS DIKUDETA!</h2>
-            <p class="subtitle">Refleks dan kalkulasimu luar biasa. Bos berhasil dihancurkan saat titik terlemahnya.</p>
+        <div id="game-over-screen" class="screen hidden">
+            <h2 style="font-size: 4.5rem; color: #ef4444; text-shadow: 0 0 30px rgba(239, 68, 68, 0.2);">SISTEM HANCUR</h2>
+            <p class="subtitle" id="game-over-reason">Kegagalan struktur mekanis akibat benturan objek proyektil.</p>
             <div style="display: flex; gap: 20px; margin-top: 10px;">
-                <button class="btn" id="btn-victory-continue" style="background:linear-gradient(135deg, #059669, #047857);">Lawan Bos Lain</button>
-                <button class="btn" id="btn-victory-menu" style="background:#e5e7eb; color:#1f2937; box-shadow:none;">Menu Utama</button>
+                <button class="btn" id="btn-retry" style="background: linear-gradient(135deg, #ef4444, #b91c1c); box-shadow: 0 8px 20px rgba(239, 68, 68, 0.2);">Bangkit Kembali</button>
+                <button class="btn" id="btn-fail-menu" style="background:#e2e8f0; color:#0f172a; box-shadow:none;">Menu Utama</button>
+            </div>
+        </div>
+
+        <div id="victory-screen" class="screen hidden">
+            <h2 style="font-size: 4.5rem; color: #10b981; text-shadow: 0 0 30px rgba(16, 185, 129, 0.25);">TARGET DIMUSNAHKAN</h2>
+            <p class="subtitle">Data anomali bos berhasil dihapus total dari memori inti komputer pemroses.</p>
+            <div style="display: flex; gap: 20px; margin-top: 10px;">
+                <button class="btn" id="btn-victory-continue" style="background:linear-gradient(135deg, #10b981, #047857); box-shadow: 0 8px 20px rgba(16, 185, 129, 0.2);">Lawan Target Lain</button>
+                <button class="btn" id="btn-victory-menu" style="background:#e2e8f0; color:#0f172a; box-shadow:none;">Menu Utama</button>
             </div>
         </div>
     </div>
 
     <script>
+        /**
+         * ==========================================================================
+         * 10. ENGINE GAME ARSITEKTUR JAVASCRIPT
+         * ==========================================================================
+         */
+
         const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
 
-        // GAME CONSTANTS & CONFIGS
-        const GAME_STATE = { MENU: 'MENU', BOSS_SELECT: 'BOSS_SELECT', PLAYING: 'PLAYING', GAMEOVER: 'GAMEOVER', VICTORY: 'VICTORY' };
+        const GAME_STATE = { MENU: 'MENU', BOSS_SELECT: 'BOSS_SELECT', PLAYING: 'PLAYING', PAUSED: 'PAUSED', GAMEOVER: 'GAMEOVER', VICTORY: 'VICTORY' };
         const CONTROL_MODES = { MOUSE: 'MOUSE', NO_MOUSE: 'NO_MOUSE' };
-        const DIFFICULTIES = { EASY: 'EASY', NORMAL: 'NORMAL', HELL: 'HELL' };
+        const DIFFICULTIES = { EASY: 'EASY', NORMAL: 'NORMAL', HELL: 'HELL', NIGHTMARE: 'NIGHTMARE'};
         
         let currentState = GAME_STATE.MENU;
         let selectedControl = CONTROL_MODES.MOUSE;
-        let selectedDifficulty = DIFFICULTIES.NORMAL;
+        let selectedDifficulty = DIFFICULTIES.EASY; 
         let currentBossType = 'vortex'; 
 
-        // RUNTIME OBJECTS
         let player;
         let boss;
         let keys = {};
@@ -384,22 +491,90 @@
         let bossProjectiles = [];
         let minions = [];
         let particles = [];
+        let miniBoxes = []; 
+        let activeWallSystems = []; 
         let gameFrame = 0;
 
-        // UTILITY CLASSES
         class Vector2 {
             constructor(x, y) { this.x = x; this.y = y; }
             static distance(v1, v2) { return Math.hypot(v1.x - v2.x, v1.y - v2.y); }
             static angleBetween(v1, v2) { return Math.atan2(v2.y - v1.y, v2.x - v1.x); }
         }
 
-        // PLAYER CLASS
+        class WallSystemData {
+            constructor(orientationIndex, gapPosition, gapSize, speed) {
+                this.orientation = orientationIndex; 
+                this.gapPos = gapPosition;
+                this.gapSize = gapSize;
+                this.speed = speed;
+                this.isTriggered = false;
+            }
+        }
+
+        /**
+         * KELAS MINIBOX UNTUK EFEK TELEPORTASI THE WALL (Update)
+         * Dilempar (diberi kecepatan awal), direm dengan gesekan, tidak berputar agar datar.
+         */
+        class MiniBox {
+            constructor(x, y, vx, vy) {
+                this.x = x;
+                this.y = y;
+                this.vx = vx;
+                this.vy = vy;
+                this.size = 14;
+                this.timer = 120; 
+                this.blink = false;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                
+                // Menerapkan gaya gesek untuk melambat
+                this.vx *= 0.92;
+                this.vy *= 0.92;
+
+                this.timer--;
+                
+                if (this.timer < 40 && this.timer % 5 === 0) this.blink = !this.blink;
+                else if (this.timer >= 40 && this.timer % 15 === 0) this.blink = !this.blink;
+
+                if (this.timer <= 0) {
+                    for (let i = 0; i < 8; i++) {
+                        let angle = (Math.PI / 4) * i; 
+                        let spd = selectedDifficulty === DIFFICULTIES.NIGHTMARE ? 4 : 2.5;
+                        bossProjectiles.push(new Projectile(this.x, this.y, angle, false, spd, '#dc2626'));
+                    }
+                    createExplosion(this.x, this.y, '#dc2626', 15, 3);
+                    return false; 
+                }
+                return true; 
+            }
+
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                // Menghapus putaran (rotate) agar ke-4 sisinya senantiasa memipih mendatar
+                
+                ctx.fillStyle = this.blink ? '#ffffff' : '#ef4444';
+                ctx.strokeStyle = '#991b1b';
+                ctx.lineWidth = 2;
+                
+                ctx.beginPath();
+                ctx.rect(-this.size/2, -this.size/2, this.size, this.size);
+                ctx.fill();
+                ctx.stroke();
+                
+                ctx.restore();
+            }
+        }
+
         class Player {
             constructor(x, y) {
                 this.x = x;
                 this.y = y;
                 this.radius = 14;
-                this.speed = 4.5;
+                this.speed = 4.8;
                 
                 if (selectedDifficulty === DIFFICULTIES.EASY) this.maxHp = 3;
                 else if (selectedDifficulty === DIFFICULTIES.NORMAL) this.maxHp = 2;
@@ -410,27 +585,23 @@
                 
                 this.isDashing = false;
                 this.dashTimer = 0;
-                this.dashDuration = 15; 
+                this.dashDuration = 14; 
                 this.dashCooldown = 0;
-                this.dashCooldownMax = 90; 
+                this.dashCooldownMax = 80; 
                 this.dashDir = { x: 0, y: 0 };
                 
                 this.invincibleTimer = 0;
-                
                 this.shootCooldown = 0;
-                this.shootCooldownMax = 10; 
+                this.shootCooldownMax = 9; 
             }
 
             takeDamage() {
                 if (this.invincibleTimer > 0 || this.isDashing) return;
                 this.hp--;
-                createExplosion(this.x, this.y, '#ef4444', 30, 4);
-                this.invincibleTimer = 60; 
-                
+                createExplosion(this.x, this.y, '#ef4444', 40, 5);
+                this.invincibleTimer = 65; 
                 updateHudUI();
-                if (this.hp <= 0) {
-                    triggerGameOver("Kehabisan nyawa akibat gempuran bos.");
-                }
+                if (this.hp <= 0) triggerGameOver("Hancur berkeping-keping akibat kegagalan memitigasi proyektil musuh.");
             }
 
             dash() {
@@ -447,8 +618,7 @@
                     dy = Math.sin(this.angle);
                 } else {
                     let length = Math.hypot(dx, dy);
-                    dx /= length;
-                    dy /= length;
+                    dx /= length; dy /= length;
                 }
 
                 this.isDashing = true;
@@ -456,8 +626,7 @@
                 this.dashDir = { x: dx, y: dy };
                 this.dashCooldown = this.dashCooldownMax;
                 this.invincibleTimer = 60; 
-                
-                createExplosion(this.x, this.y, '#9ca3af', 15, 2);
+                createExplosion(this.x, this.y, '#94a3b8', 20, 2.5);
             }
 
             update() {
@@ -466,14 +635,12 @@
                 if (this.shootCooldown > 0) this.shootCooldown--;
 
                 if (this.isDashing) {
-                    this.x += this.dashDir.x * (this.speed * 2.5);
-                    this.y += this.dashDir.y * (this.speed * 2.5);
+                    this.x += this.dashDir.x * (this.speed * 2.6);
+                    this.y += this.dashDir.y * (this.speed * 2.6);
                     this.dashTimer--;
                     if (this.dashTimer <= 0) this.isDashing = false;
                     
-                    if (gameFrame % 2 === 0) {
-                        particles.push(new Particle(this.x, this.y, 'rgba(156, 163, 175, 0.4)', 8, 0.04, 0));
-                    }
+                    if (gameFrame % 2 === 0) particles.push(new Particle(this.x, this.y, 'rgba(148, 163, 184, 0.5)', 6, 0.05, 0));
                 } else {
                     let moveX = 0; let moveY = 0;
                     if (keys['w'] || keys['arrowup']) moveY -= 1;
@@ -482,16 +649,15 @@
                     if (keys['d'] || keys['arrowright']) moveX += 1;
 
                     if (moveX !== 0 && moveY !== 0) {
-                        moveX *= 0.7071;
-                        moveY *= 0.7071;
+                        moveX *= 0.7071; moveY *= 0.7071;
                     }
 
                     this.x += moveX * this.speed;
                     this.y += moveY * this.speed;
                 }
 
-                this.x = Math.max(this.radius + 10, Math.min(canvas.width - this.radius - 10, this.x));
-                this.y = Math.max(this.radius + 10, Math.min(canvas.height - this.radius - 10, this.y));
+                this.x = Math.max(this.radius + 15, Math.min(canvas.width - this.radius - 15, this.x));
+                this.y = Math.max(this.radius + 15, Math.min(canvas.height - this.radius - 15, this.y));
 
                 if (selectedControl === CONTROL_MODES.MOUSE) {
                     this.angle = Math.atan2(mouse.y - this.y, mouse.x - this.x);
@@ -506,7 +672,6 @@
                         }
                     }
                     this.angle = Math.atan2(targetObj.y - this.y, targetObj.x - this.x);
-                    
                     if ((keys[' '] || keys['spacebar']) && this.shootCooldown === 0) this.shoot();
                 }
             }
@@ -514,7 +679,7 @@
             shoot() {
                 projectiles.push(new Projectile(this.x, this.y, this.angle, true));
                 this.shootCooldown = this.shootCooldownMax;
-                particles.push(new Particle(this.x + Math.cos(this.angle)*12, this.y + Math.sin(this.angle)*12, '#4b5563', 2, 0.1, this.angle + Math.PI));
+                particles.push(new Particle(this.x + Math.cos(this.angle) * 12, this.y + Math.sin(this.angle) * 12, '#94a3b8', 2, 0.1, this.angle + Math.PI));
             }
 
             draw() {
@@ -522,34 +687,30 @@
                 ctx.translate(this.x, this.y);
                 ctx.rotate(this.angle);
 
-                if (this.invincibleTimer > 0 && Math.floor(gameFrame / 4) % 2 === 0) {
-                    ctx.fillStyle = 'rgba(79, 70, 229, 0.2)';
-                } else {
-                    ctx.fillStyle = '#4f46e5'; 
-                }
+                if (this.invincibleTimer > 0 && Math.floor(gameFrame / 4) % 2 === 0) ctx.fillStyle = 'rgba(59, 130, 246, 0.25)';
+                else ctx.fillStyle = '#3b82f6'; 
 
-                ctx.strokeStyle = '#1e1b4b';
+                ctx.strokeStyle = '#1e3a8a';
                 ctx.lineWidth = 3;
                 
                 ctx.beginPath();
-                ctx.moveTo(this.radius + 4, 0);
-                ctx.lineTo(-this.radius, -this.radius + 2);
+                ctx.moveTo(this.radius + 5, 0);
+                ctx.lineTo(-this.radius, -this.radius + 3);
                 ctx.lineTo(-this.radius + 4, 0);
-                ctx.lineTo(-this.radius, this.radius - 2);
+                ctx.lineTo(-this.radius, this.radius - 3);
                 ctx.closePath();
                 ctx.fill();
                 ctx.stroke();
 
                 ctx.fillStyle = '#ffffff';
                 ctx.beginPath();
-                ctx.arc(this.radius - 2, 0, 4, 0, Math.PI * 2);
+                ctx.arc(this.radius - 2, 0, 3.5, 0, Math.PI * 2);
                 ctx.fill();
-                ctx.stroke();
 
                 ctx.restore();
 
-                if (this.invincibleTimer > 0) {
-                    ctx.strokeStyle = 'rgba(99, 102, 241, 0.6)';
+                if (this.invincibleTimer > 0 || this.isDashing) {
+                    ctx.strokeStyle = 'rgba(56, 189, 248, 0.7)';
                     ctx.lineWidth = 2;
                     ctx.beginPath();
                     ctx.arc(this.x, this.y, this.radius + 8, 0, Math.PI * 2);
@@ -558,7 +719,6 @@
             }
         }
 
-        // PROJECTILE CLASS
         class Projectile {
             constructor(x, y, angle, isPlayer = false, customSpeed = null, color = null) {
                 this.x = x;
@@ -566,8 +726,8 @@
                 this.angle = angle;
                 this.isPlayer = isPlayer;
                 this.radius = isPlayer ? 5 : 6;
-                this.speed = customSpeed ? customSpeed : (isPlayer ? 10 : 3.5);
-                this.color = color ? color : (isPlayer ? '#111827' : '#dc2626');
+                this.speed = customSpeed ? customSpeed : (isPlayer ? 11 : 3.6);
+                this.color = color ? color : (isPlayer ? '#38bdf8' : '#ef4444');
                 this.active = true;
             }
 
@@ -575,7 +735,7 @@
                 this.x += Math.cos(this.angle) * this.speed;
                 this.y += Math.sin(this.angle) * this.speed;
 
-                if (this.x < -20 || this.x > canvas.width + 20 || this.y < -20 || this.y > canvas.height + 20) {
+                if (this.x < -40 || this.x > canvas.width + 40 || this.y < -40 || this.y > canvas.height + 40) {
                     this.active = false;
                 }
             }
@@ -585,54 +745,144 @@
                 ctx.beginPath();
                 ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
                 ctx.fill();
-                
-                ctx.strokeStyle = '#1f2937';
+                ctx.strokeStyle = '#0f172a';
                 ctx.lineWidth = 1;
                 ctx.stroke();
             }
         }
 
-        // MINION HEXAGON CLASS
         class Minion {
-            constructor(x, y, index, parent) {
+            constructor(x, y, index, parent, total = 6) {
                 this.parent = parent;
                 this.index = index;
                 this.radius = 16;
-                this.hp = 3;
-                this.orbitRadius = 120;
-                this.orbitAngle = (Math.PI * 2 / 6) * index;
+                this.hp = selectedDifficulty === DIFFICULTIES.NIGHTMARE ? 5 : 3;
+                this.orbitRadius = 130;
+                this.orbitAngle = (Math.PI * 2 / total) * index;
                 this.x = x;
                 this.y = y;
                 this.shootTimer = Math.floor(Math.random() * 60);
+                
+                this.teleportCooldown = Math.floor(Math.random() * 120) + 150; 
+                this.shieldAngle = 0;
+                
+                // State baru untuk minion di Nightmare (ORBIT -> WARN -> STATIONARY)
+                this.mode = 'ORBIT'; 
+                this.warningTimer = 0;
+                this.stationaryTimer = 0;
+                this.targetX = 0;
+                this.targetY = 0;
             }
 
             update() {
-                this.orbitAngle += 0.015;
-                this.x = this.parent.x + Math.cos(this.orbitAngle) * this.orbitRadius;
-                this.y = this.parent.y + Math.sin(this.orbitAngle) * this.orbitRadius;
+                this.orbitAngle += 0.016;
+                let targetOrbitX = this.parent.x + Math.cos(this.orbitAngle) * this.orbitRadius;
+                let targetOrbitY = this.parent.y + Math.sin(this.orbitAngle) * this.orbitRadius;
 
-                this.shootTimer++;
-                if (this.shootTimer >= 140) {
-                    let angleToPlayer = Math.atan2(player.y - this.y, player.x - this.x);
-                    bossProjectiles.push(new Projectile(this.x, this.y, angleToPlayer, false, 2.5, '#b91c1c'));
-                    this.shootTimer = 0;
+                if (selectedDifficulty === DIFFICULTIES.NIGHTMARE) {
+                    this.shieldAngle += 0.04;
+                    
+                    if (this.mode === 'ORBIT') {
+                        this.teleportCooldown--;
+                        
+                        if (this.teleportCooldown <= 0) {
+                            // Teleport ke titik random untuk membatasi pergerakan pemain
+                            this.targetX = Math.random() * (canvas.width - 200) + 100;
+                            this.targetY = Math.random() * (canvas.height - 200) + 100;
+                            
+                            this.mode = 'WARN';
+                            this.warningTimer = 45; // 0.75 detik peringatan
+                        }
+                        
+                        this.x += (targetOrbitX - this.x) * 0.02;
+                        this.y += (targetOrbitY - this.y) * 0.02;
+
+                    } else if (this.mode === 'WARN') {
+                        this.warningTimer--;
+                        if (this.warningTimer <= 0) {
+                            // Pindah lokasi dan bersiap membuat dinding peluru
+                            this.x = this.targetX;
+                            this.y = this.targetY;
+                            createExplosion(this.x, this.y, 'rgba(245, 158, 11, 0.6)', 25, 4);
+                            
+                            this.mode = 'STATIONARY';
+                            this.stationaryTimer = 120; // Bertahan menembak selama 2 detik
+                        }
+                    } else if (this.mode === 'STATIONARY') {
+                        this.stationaryTimer--;
+
+                        // Menembakkan dinding peluru setiap 15 frame ke arah pemain
+                        if (this.stationaryTimer % 15 === 0) {
+                            let angleToPlayer = Math.atan2(player.y - this.y, player.x - this.x);
+                            bossProjectiles.push(new Projectile(this.x, this.y, angleToPlayer, false, 3.5, '#f59e0b'));
+                            bossProjectiles.push(new Projectile(this.x, this.y, angleToPlayer - 0.15, false, 3.5, '#f59e0b'));
+                            bossProjectiles.push(new Projectile(this.x, this.y, angleToPlayer + 0.15, false, 3.5, '#f59e0b'));
+                        }
+
+                        if (this.stationaryTimer <= 0) {
+                            this.mode = 'ORBIT';
+                            this.teleportCooldown = Math.floor(Math.random() * 140) + 160;
+                        }
+                    }
+
+                    // Perisai melingkar saat orbit saja
+                    if (gameFrame % 45 === 0 && this.mode === 'ORBIT') {
+                        for (let i = 0; i < 4; i++) {
+                            let bulletAngle = this.shieldAngle + (Math.PI * 2 / 4) * i;
+                            bossProjectiles.push(new Projectile(this.x, this.y, bulletAngle, false, 2.2, '#f59e0b'));
+                        }
+                    }
+                } else {
+                    this.x = targetOrbitX;
+                    this.y = targetOrbitY;
+                }
+
+                // Tembakan reguler hanya aktif di mode Orbit
+                if (this.mode === 'ORBIT') {
+                    this.shootTimer++;
+                    let currentShootMax = selectedDifficulty === DIFFICULTIES.NIGHTMARE ? 80 : 130;
+                    if (this.shootTimer >= currentShootMax) {
+                        let angleToPlayer = Math.atan2(player.y - this.y, player.x - this.x);
+                        let bSpeed = selectedDifficulty === DIFFICULTIES.NIGHTMARE ? 3.8 : 2.5;
+                        bossProjectiles.push(new Projectile(this.x, this.y, angleToPlayer, false, bSpeed, '#d97706'));
+                        this.shootTimer = 0;
+                    }
                 }
             }
 
             takeDamage() {
                 this.hp--;
-                createExplosion(this.x, this.y, '#d97706', 10, 2);
+                createExplosion(this.x, this.y, '#f59e0b', 12, 3);
                 if (this.hp <= 0) {
-                    createExplosion(this.x, this.y, '#b45309', 20, 3);
+                    createExplosion(this.x, this.y, '#b45309', 24, 4);
                     return false; 
                 }
                 return true;
             }
 
             draw() {
+                if (this.mode === 'WARN') {
+                    ctx.save();
+                    ctx.strokeStyle = 'rgba(245, 158, 11, 0.8)';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(this.targetX, this.targetY, this.radius + 15, 0, Math.PI * 2);
+                    ctx.stroke();
+                    
+                    if (this.warningTimer % 10 < 5) {
+                        ctx.beginPath();
+                        ctx.moveTo(this.targetX - 25, this.targetY);
+                        ctx.lineTo(this.targetX + 25, this.targetY);
+                        ctx.moveTo(this.targetX, this.targetY - 25);
+                        ctx.lineTo(this.targetX, this.targetY + 25);
+                        ctx.stroke();
+                    }
+                    ctx.restore();
+                }
+
                 ctx.save();
                 ctx.translate(this.x, this.y);
-                ctx.rotate(gameFrame * 0.02);
+                ctx.rotate(gameFrame * 0.025);
                 
                 ctx.fillStyle = '#f59e0b';
                 ctx.strokeStyle = '#78350f';
@@ -648,57 +898,66 @@
                 ctx.stroke();
                 
                 ctx.restore();
+
+                if (selectedDifficulty === DIFFICULTIES.NIGHTMARE && this.mode === 'STATIONARY') {
+                    ctx.strokeStyle = 'rgba(245, 158, 11, 0.3)';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, 45, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
             }
         }
 
-        // BOSS BASE CLASS
         class Boss {
             constructor(type) {
                 this.type = type; 
                 this.x = canvas.width / 2;
-                this.y = canvas.height / 2 - 50;
+                this.y = canvas.height / 2 - 40;
                 this.maxHp = 100;
                 this.hp = this.maxHp;
                 
                 this.state = 'APPEAR'; 
-                this.stateTimer = 120; 
+                this.stateTimer = 110; 
                 
-                this.maxStamina = 600; 
+                this.maxStamina = selectedDifficulty === DIFFICULTIES.NIGHTMARE ? 450 : 600; 
                 this.stamina = this.maxStamina;
                 this.isImmortal = true; 
                 
-                this.teleportTarget = null;
-                this.attackPatternIndex = 0;
-                this.motherAOETrigger = false;
-                
                 if (type === 'vortex') {
                     this.radius = 45;
-                    this.name = "THE VORTEX";
+                    this.name = "THE VORTEX v2.0";
+                    this.x = canvas.width / 2;
+                    this.y = canvas.height / 2;
                 } else if (type === 'wall') {
                     this.radius = 40;
-                    this.name = "THE WALL";
+                    this.name = "THE WALL MATRIX";
                 } else if (type === 'mother') {
                     this.radius = 50;
-                    this.name = "THE MOTHER";
-                    this.spawnMinions();
+                    this.name = "THE MOTHER HIVE";
+                    this.spawnMinions(6);
+                } else if (type === 'gear') {
+                    this.radius = 45;
+                    this.name = "THE GEAR ASSEMBLER";
+                    this.spawnMinions(3);
                 }
             }
 
-            spawnMinions() {
+            spawnMinions(count = 6) {
                 minions = [];
-                for(let i = 0; i < 6; i++) {
-                    minions.push(new Minion(this.x, this.y, i, this));
+                for(let i = 0; i < count; i++) {
+                    minions.push(new Minion(this.x, this.y, i, this, count));
                 }
             }
 
             takeDamage(amount) {
                 if (this.isImmortal) {
-                    createExplosion(player.x, player.y, '#9ca3af', 2, 1);
+                    createExplosion(player.x, player.y, '#94a3b8', 1, 1);
                     return false; 
                 }
                 
                 this.hp -= amount;
-                createExplosion(this.x, this.y, '#ef4444', 8, 3);
+                createExplosion(this.x, this.y, '#ef4444', 10, 3.5);
                 updateHudUI();
 
                 if (this.hp <= 0) {
@@ -709,6 +968,11 @@
             }
 
             update() {
+                if (this.type === 'vortex') {
+                    this.x = canvas.width / 2;
+                    this.y = canvas.height / 2;
+                }
+
                 switch (this.state) {
                     case 'APPEAR':
                         this.stateTimer--;
@@ -725,19 +989,24 @@
                         
                         this.executeAttacks();
 
-                        if (this.stamina > 100 && this.stamina % 180 === 0) {
-                            this.initiateTeleport();
+                        if (this.stamina > 0 && this.stamina % 150 === 0) {
+                            if (this.type === 'vortex' || this.type === 'gear') {
+                                this.triggerRingBurstAttack();
+                            }
+                            if (this.type !== 'vortex') {
+                                this.initiateTeleportOrShift();
+                            }
                         }
 
                         if (this.stamina <= 0) {
-                            if (this.type === 'mother' && minions.length > 0) {
-                                this.stamina = 60; 
+                            if ((this.type === 'mother' || this.type === 'gear') && minions.length > 0) {
+                                this.stamina = 90; 
                             } else {
                                 this.state = 'STUNNED';
-                                this.stateTimer = 240; 
+                                this.stateTimer = selectedDifficulty === DIFFICULTIES.NIGHTMARE ? 150 : 250; 
                                 this.isImmortal = false; 
                                 updateHudUI();
-                                createExplosion(this.x, this.y, '#3b82f6', 40, 5);
+                                createExplosion(this.x, this.y, '#3b82f6', 50, 6);
                             }
                         }
                         break;
@@ -745,13 +1014,15 @@
                     case 'STUNNED':
                         this.stateTimer--;
                         updateHudUI();
-                        this.x += Math.sin(gameFrame * 2) * 0.8;
+                        
+                        this.x += Math.sin(gameFrame * 2.5) * 0.9;
                         
                         if (this.stateTimer <= 0) {
                             this.state = 'ATTACKING';
                             this.stamina = this.maxStamina;
                             this.isImmortal = true;
-                            if (this.type === 'mother') this.spawnMinions(); 
+                            if (this.type === 'mother') this.spawnMinions(6); 
+                            else if (this.type === 'gear') this.spawnMinions(3);
                             updateHudUI();
                         }
                         break;
@@ -769,161 +1040,188 @@
                 }
             }
 
-            initiateTeleport() {
+            initiateTeleportOrShift() {
                 this.state = 'TELEPORTING';
-                this.stateTimer = 45; 
+                this.stateTimer = selectedDifficulty === DIFFICULTIES.NIGHTMARE ? 60 : 90; 
                 this.teleportTarget = {
-                    x: Math.random() * (canvas.width - 200) + 100,
-                    y: Math.random() * (canvas.height - 200) + 100
+                    x: Math.random() * (canvas.width - 240) + 120,
+                    y: Math.random() * (canvas.height - 240) + 120
                 };
             }
 
+            triggerRingBurstAttack() {
+                // Di-nerf jumlah dan kecepatannya
+                let bulletCount = this.type === 'gear' ? 12 : (selectedDifficulty === DIFFICULTIES.NIGHTMARE ? 28 : 16);
+                let speed = this.type === 'gear' ? 2.5 : (selectedDifficulty === DIFFICULTIES.NIGHTMARE ? 4.0 : 2.5);
+                
+                createExplosion(this.x, this.y, '#ef4444', 30, 4);
+                
+                for (let i = 0; i < bulletCount; i++) {
+                    let angle = (Math.PI * 2 / bulletCount) * i;
+                    bossProjectiles.push(new Projectile(this.x, this.y, angle, false, speed, '#ef4444'));
+                }
+            }
+
             triggerPostTeleportEffect() {
-                if (this.type === 'vortex') {
-                    for (let i = 0; i < 8; i++) {
-                        let angle = (Math.PI * 2 / 8) * i;
-                        bossProjectiles.push(new Projectile(this.x, this.y, angle, false, 3.5, '#dc2626'));
-                    }
+                if (this.type === 'wall') {
+                    // Kotak mini dilempar dengan kecepatan dari pusat bos ke 4 arah kardinal (Atas, Bawah, Kiri, Kanan)
+                    let speed = 7;
+                    miniBoxes.push(new MiniBox(this.x, this.y, -speed, 0)); // Kiri
+                    miniBoxes.push(new MiniBox(this.x, this.y, speed, 0));  // Kanan
+                    miniBoxes.push(new MiniBox(this.x, this.y, 0, -speed)); // Atas
+                    miniBoxes.push(new MiniBox(this.x, this.y, 0, speed));  // Bawah
                 } 
-                else if (this.type === 'wall') {
-                    for (let i = 0; i < 4; i++) {
-                        let angle = (Math.PI / 2) * i;
-                        bossProjectiles.push(new Projectile(this.x, this.y, angle, false, 3.5, '#991b1b'));
+                else if (this.type === 'mother' || this.type === 'gear') {
+                    createExplosion(this.x, this.y, 'rgba(15, 23, 42, 0.2)', 40, 6);
+                    if (Vector2.distance(this, player) < 160) {
+                        player.takeDamage();
                     }
-                } 
-                else if (this.type === 'mother') {
-                    this.motherAOETrigger = true;
-                    createExplosion(this.x, this.y, 'rgba(17, 24, 39, 0.15)', 50, 8);
-                    let d = Vector2.distance(this, player);
-                    if (d < 180) player.takeDamage();
-                    setTimeout(() => { this.motherAOETrigger = false; }, 200);
                 }
             }
 
             executeAttacks() {
                 if (this.type === 'vortex') {
-                    let spinAngle = (gameFrame * 0.04) % (Math.PI * 2);
-                    if (gameFrame % 5 === 0) {
-                        for(let j = 0; j < 3; j++) {
-                            let finalAngle = spinAngle + (j * Math.PI * 2 / 3);
-                            bossProjectiles.push(new Projectile(this.x, this.y, finalAngle, false, 2.8, '#b91c1c'));
+                    let normalSpinAngle = (gameFrame * 0.035) % (Math.PI * 2);
+                    // Nerf Vortex: Interval diperbesar agar peluru tidak serapat sebelumnya
+                    let interval = 9;
+                    if (selectedDifficulty === DIFFICULTIES.NIGHTMARE) interval = 5;
+                    else if (selectedDifficulty === DIFFICULTIES.EASY) interval = 13;
+
+                    if (gameFrame % interval === 0) {
+                        let totalLine = selectedDifficulty === DIFFICULTIES.NIGHTMARE ? 4 : 2;
+                        let bSpeed = selectedDifficulty === DIFFICULTIES.NIGHTMARE ? 4.0 : 2.6;
+                        
+                        for(let j = 0; j < totalLine; j++) {
+                            let finalAngle = normalSpinAngle + (j * Math.PI * 2 / totalLine);
+                            bossProjectiles.push(new Projectile(this.x, this.y, finalAngle, false, bSpeed, '#ef4444'));
                         }
                     }
                 } 
                 else if (this.type === 'wall') {
-                    let speedModifier = Math.floor((this.maxStamina - this.stamina) / 120);
-                    let spawnInterval = Math.max(25, 55 - speedModifier * 5); 
+                    let currentSpawnTime = 65;
+                    if (selectedDifficulty === DIFFICULTIES.NIGHTMARE) currentSpawnTime = 30;
 
-                    if (gameFrame % spawnInterval === 0) {
-                        let rGate = Math.floor(Math.random() * 4); 
-                        let gapPosition = Math.random() * (rGate < 2 ? canvas.width : canvas.height);
+                    if (gameFrame % currentSpawnTime === 0) {
+                        // Buff the Wall: Nightmare maksimal 5 dinding, Normal/Mudah tetap 3.
+                        let maxWalls = selectedDifficulty === DIFFICULTIES.NIGHTMARE ? 5 : 3;
                         
-                        let speed = 2.0 + speedModifier * 0.3;
-                        let gapSize = 100;
+                        if (activeWallSystems.length < maxWalls) {
+                            let gateDirection = Math.floor(Math.random() * 4); 
+                            let currentGapSize = 120;
+                            let currentWallSpeed = 2.4;
 
-                        if (rGate === 0) { 
-                            for (let x = 30; x < canvas.width; x += 50) {
-                                if (Math.abs(x - gapPosition) > gapSize) {
-                                    bossProjectiles.push(new Projectile(x, 0, Math.PI / 2, false, speed, '#dc2626'));
-                                }
+                            if (selectedDifficulty === DIFFICULTIES.NIGHTMARE) {
+                                currentGapSize = 85; 
+                                currentWallSpeed = 4.2; 
+                            } else if (selectedDifficulty === DIFFICULTIES.EASY) {
+                                currentGapSize = 160;
+                                currentWallSpeed = 1.8;
                             }
-                        } else if (rGate === 1) { 
-                            for (let x = 30; x < canvas.width; x += 50) {
-                                if (Math.abs(x - gapPosition) > gapSize) {
-                                    bossProjectiles.push(new Projectile(x, canvas.height, -Math.PI / 2, false, speed, '#dc2626'));
-                                }
-                            }
-                        } else if (rGate === 2) { 
-                            for (let y = 30; y < canvas.height; y += 50) {
-                                if (Math.abs(y - gapPosition) > gapSize) {
-                                    bossProjectiles.push(new Projectile(0, y, 0, false, speed, '#dc2626'));
-                                }
-                            }
-                        } else if (rGate === 3) { 
-                            for (let y = 30; y < canvas.height; y += 50) {
-                                if (Math.abs(y - gapPosition) > gapSize) {
-                                    bossProjectiles.push(new Projectile(canvas.width, y, Math.PI, false, speed, '#dc2626'));
-                                }
-                            }
+
+                            let gapTargetPosition = Math.random() * (gateDirection < 2 ? canvas.width : canvas.height);
+                            let newWall = new WallSystemData(gateDirection, gapTargetPosition, currentGapSize, currentWallSpeed);
+                            activeWallSystems.push(newWall);
+                            this.spawnWallGridProjectiles(newWall);
                         }
                     }
                 } 
                 else if (this.type === 'mother') {
-                    if (gameFrame % 40 === 0) {
+                    let rate = selectedDifficulty === DIFFICULTIES.NIGHTMARE ? 25 : 45;
+                    if (gameFrame % rate === 0) {
                         let angleToPlayer = Math.atan2(player.y - this.y, player.x - this.x);
-                        bossProjectiles.push(new Projectile(this.x, this.y, angleToPlayer, false, 2, '#991b1b'));
-                        bossProjectiles.push(new Projectile(this.x, this.y, angleToPlayer - 0.25, false, 2, '#991b1b'));
-                        bossProjectiles.push(new Projectile(this.x, this.y, angleToPlayer + 0.25, false, 2, '#991b1b'));
+                        let bSpeed = selectedDifficulty === DIFFICULTIES.NIGHTMARE ? 4.5 : 2.6;
+                        
+                        bossProjectiles.push(new Projectile(this.x, this.y, angleToPlayer, false, bSpeed, '#991b1b'));
+                        bossProjectiles.push(new Projectile(this.x, this.y, angleToPlayer - 0.22, false, bSpeed, '#991b1b'));
+                        bossProjectiles.push(new Projectile(this.x, this.y, angleToPlayer + 0.22, false, bSpeed, '#991b1b'));
                     }
                 }
+                else if (this.type === 'gear') {
+                    // Vortex lemot
+                    if (gameFrame % 18 === 0) {
+                        let angle = (gameFrame * 0.035) % (Math.PI * 2);
+                        bossProjectiles.push(new Projectile(this.x, this.y, angle, false, 2.5, '#ef4444'));
+                        bossProjectiles.push(new Projectile(this.x, this.y, angle + Math.PI, false, 2.5, '#ef4444'));
+                    }
+                    // Dinding Wall yang jarang muncul (Maksimal 1)
+                    let wallSpawnTime = selectedDifficulty === DIFFICULTIES.NIGHTMARE ? 100 : 160;
+                    if (gameFrame % wallSpawnTime === 0 && activeWallSystems.length < 1) {
+                        let newWall = new WallSystemData(Math.floor(Math.random() * 4), Math.random() * canvas.width, 160, 1.8);
+                        activeWallSystems.push(newWall);
+                        this.spawnWallGridProjectiles(newWall);
+                    }
+                }
+            }
+
+            spawnWallGridProjectiles(wallData) {
+                let speed = wallData.speed;
+                let gapPos = wallData.gapPos;
+                let gapSize = wallData.gapSize;
+                let dir = wallData.orientation;
+                let stepSpacing = 24; 
+
+                if (dir === 0) { 
+                    for (let x = 10; x < canvas.width; x += stepSpacing) {
+                        if (Math.abs(x - gapPos) > gapSize) bossProjectiles.push(new Projectile(x, -10, Math.PI / 2, false, speed, '#ef4444'));
+                    }
+                } else if (dir === 1) { 
+                    for (let x = 10; x < canvas.width; x += stepSpacing) {
+                        if (Math.abs(x - gapPos) > gapSize) bossProjectiles.push(new Projectile(x, canvas.height + 10, -Math.PI / 2, false, speed, '#ef4444'));
+                    }
+                } else if (dir === 2) { 
+                    for (let y = 10; y < canvas.height; y += stepSpacing) {
+                        if (Math.abs(y - gapPos) > gapSize) bossProjectiles.push(new Projectile(-10, y, 0, false, speed, '#ef4444'));
+                    }
+                } else if (dir === 3) { 
+                    for (let y = 10; y < canvas.height; y += stepSpacing) {
+                        if (Math.abs(y - gapPos) > gapSize) bossProjectiles.push(new Projectile(canvas.width + 10, y, Math.PI, false, speed, '#ef4444'));
+                    }
+                }
+                wallData.isTriggered = true;
             }
 
             draw() {
                 if (this.state === 'TELEPORTING' && this.teleportTarget) {
                     ctx.save();
-                    ctx.strokeStyle = 'rgba(220, 38, 38, 0.8)';
+                    ctx.strokeStyle = 'rgba(239, 68, 68, 0.8)';
                     ctx.lineWidth = 3;
-                    ctx.setLineDash([6, 6]);
-                    
+                    ctx.setLineDash([8, 8]);
                     ctx.beginPath();
                     ctx.arc(this.teleportTarget.x, this.teleportTarget.y, this.radius, 0, Math.PI * 2);
                     ctx.stroke();
                     
+                    ctx.translate(this.teleportTarget.x, this.teleportTarget.y);
+                    ctx.rotate(gameFrame * 0.1);
                     ctx.beginPath();
-                    ctx.moveTo(this.teleportTarget.x - this.radius - 10, this.teleportTarget.y);
-                    ctx.lineTo(this.teleportTarget.x + this.radius + 10, this.teleportTarget.y);
-                    ctx.moveTo(this.teleportTarget.x, this.teleportTarget.y - this.radius - 10);
-                    ctx.lineTo(this.teleportTarget.x, this.teleportTarget.y + this.radius + 10);
+                    ctx.moveTo(-this.radius - 20, 0); ctx.lineTo(this.radius + 20, 0);
+                    ctx.moveTo(0, -this.radius - 20); ctx.lineTo(0, this.radius + 20);
                     ctx.stroke();
                     ctx.restore();
                 }
 
                 if (this.state === 'TELEPORTING') return; 
 
-                if (this.type === 'mother' && this.motherAOETrigger) {
-                    ctx.fillStyle = 'rgba(220, 38, 38, 0.15)';
-                    ctx.beginPath();
-                    ctx.arc(this.x, this.y, 180, 0, Math.PI * 2);
-                    ctx.fill();
-                }
-
                 ctx.save();
                 ctx.translate(this.x, this.y);
                 
-                if (this.type === 'vortex') ctx.rotate(gameFrame * 0.02);
-                else if (this.type === 'wall') ctx.rotate(gameFrame * 0.005);
-                else ctx.rotate(-gameFrame * 0.01);
+                if (this.type === 'vortex') ctx.rotate(gameFrame * 0.03);
+                else if (this.type === 'wall') ctx.rotate(gameFrame * 0.006);
+                else if (this.type === 'mother') ctx.rotate(-gameFrame * 0.012);
+                else if (this.type === 'gear') ctx.rotate(gameFrame * 0.015);
 
-                if (this.state === 'STUNNED') {
-                    ctx.fillStyle = '#93c5fd'; 
-                    ctx.strokeStyle = '#2563eb';
-                } else {
-                    ctx.fillStyle = '#1f2937'; 
-                    ctx.strokeStyle = '#dc2626';
-                }
+                if (this.state === 'STUNNED') { ctx.fillStyle = '#60a5fa'; ctx.strokeStyle = '#1e3a8a'; } 
+                else { ctx.fillStyle = '#1e293b'; ctx.strokeStyle = '#ef4444'; }
                 ctx.lineWidth = 5;
 
                 if (this.type === 'vortex') {
-                    ctx.beginPath();
-                    ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.stroke();
-                    
-                    ctx.strokeStyle = this.state === 'STUNNED' ? '#60a5fa' : '#ef4444';
-                    ctx.lineWidth = 3;
-                    ctx.beginPath();
-                    ctx.arc(0, 0, this.radius - 16, 0, Math.PI, true);
-                    ctx.stroke();
+                    ctx.beginPath(); ctx.arc(0, 0, this.radius, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+                    ctx.strokeStyle = this.state === 'STUNNED' ? '#bae6fd' : '#f87171';
+                    ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0, 0, this.radius - 15, 0, Math.PI, true); ctx.stroke();
                 } 
                 else if (this.type === 'wall') {
-                    ctx.beginPath();
-                    ctx.rect(-this.radius, -this.radius, this.radius * 2, this.radius * 2);
-                    ctx.fill();
-                    ctx.stroke();
-                    
-                    ctx.strokeStyle = this.state === 'STUNNED' ? '#60a5fa' : '#ef4444';
-                    ctx.lineWidth = 2;
-                    ctx.strokeRect(-this.radius + 10, -this.radius + 10, (this.radius - 10) * 2, (this.radius - 10) * 2);
+                    ctx.beginPath(); ctx.rect(-this.radius, -this.radius, this.radius * 2, this.radius * 2); ctx.fill(); ctx.stroke();
+                    ctx.strokeStyle = this.state === 'STUNNED' ? '#bae6fd' : '#f87171';
+                    ctx.lineWidth = 2; ctx.strokeRect(-this.radius + 8, -this.radius + 8, (this.radius - 8) * 2, (this.radius - 8) * 2);
                 } 
                 else if (this.type === 'mother') {
                     ctx.beginPath();
@@ -931,126 +1229,109 @@
                         let angle = (Math.PI * 2 / 6) * i;
                         ctx.lineTo(Math.cos(angle) * this.radius, Math.sin(angle) * this.radius);
                     }
-                    ctx.closePath();
-                    ctx.fill();
-                    ctx.stroke();
+                    ctx.closePath(); ctx.fill(); ctx.stroke();
 
-                    ctx.fillStyle = this.state === 'STUNNED' ? '#3b82f6' : '#b91c1c';
+                    ctx.fillStyle = this.state === 'STUNNED' ? '#2563eb' : '#991b1b';
+                    ctx.beginPath(); ctx.arc(0, 0, 15, 0, Math.PI * 2); ctx.fill();
+                }
+                else if (this.type === 'gear') {
                     ctx.beginPath();
-                    ctx.arc(0, 0, 14, 0, Math.PI * 2);
-                    ctx.fill();
+                    for (let i = 0; i < 12; i++) {
+                        let angle = (Math.PI * 2 / 12) * i;
+                        let r = (i % 2 === 0) ? this.radius : this.radius - 12;
+                        ctx.lineTo(Math.cos(angle) * r, Math.sin(angle) * r);
+                    }
+                    ctx.closePath(); ctx.fill(); ctx.stroke();
+                    
+                    ctx.fillStyle = this.state === 'STUNNED' ? '#2563eb' : '#64748b';
+                    ctx.beginPath(); ctx.arc(0, 0, 15, 0, Math.PI * 2); ctx.fill();
                 }
 
                 ctx.restore();
             }
         }
 
-        // PARTICLE EFFECT SYSTEM
         class Particle {
-            constructor(x, y, color, speedFactor = 5, decay = 0.03, fixedAngle = null) {
-                this.x = x;
-                this.y = y;
-                this.color = color;
+            constructor(x, y, color, speedFactor = 4, decay = 0.03, fixedAngle = null) {
+                this.x = x; this.y = y; this.color = color;
                 let ang = fixedAngle !== null ? fixedAngle : Math.random() * Math.PI * 2;
-                let spd = (Math.random() * 0.7 + 0.3) * speedFactor;
-                this.vx = Math.cos(ang) * spd;
-                this.vy = Math.sin(ang) * spd;
-                this.alpha = 1;
-                this.decay = decay;
-                this.radius = Math.random() * 3 + 2;
+                let spd = (Math.random() * 0.6 + 0.4) * speedFactor;
+                this.vx = Math.cos(ang) * spd; this.vy = Math.sin(ang) * spd;
+                this.alpha = 1; this.decay = decay;
+                this.radius = Math.random() * 3.5 + 1.5;
             }
             update() {
-                this.x += this.vx;
-                this.y += this.vy;
-                this.alpha -= this.decay;
+                this.x += this.vx; this.y += this.vy; this.alpha -= this.decay;
                 return this.alpha > 0;
             }
             draw() {
                 ctx.save();
-                ctx.globalAlpha = this.alpha;
-                ctx.fillStyle = this.color;
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                ctx.fill();
+                ctx.globalAlpha = this.alpha; ctx.fillStyle = this.color;
+                ctx.beginPath(); ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2); ctx.fill();
                 ctx.restore();
             }
         }
 
         function createExplosion(x, y, color, count, speedFactor) {
-            for (let i = 0; i < count; i++) {
-                particles.push(new Particle(x, y, color, speedFactor));
-            }
+            for (let i = 0; i < count; i++) particles.push(new Particle(x, y, color, speedFactor));
         }
 
-        // CONTROL HANDLERS
+        function removeFocusFromButtons() {
+            document.querySelectorAll('button, select').forEach(el => el.blur());
+        }
+
         window.addEventListener('keydown', (e) => {
             let k = e.key.toLowerCase();
             keys[k] = true;
-            if (k === ' ') keys['spacebar'] = true;
+            if (e.code === 'Space') { e.preventDefault(); keys['spacebar'] = true; }
 
-            if (k === 'j' && selectedControl === CONTROL_MODES.NO_MOUSE) {
-                if (currentState === GAME_STATE.PLAYING) player.dash();
+            if (k === 'j' && selectedControl === CONTROL_MODES.NO_MOUSE && currentState === GAME_STATE.PLAYING) player.dash();
+            
+            if (e.code === 'Escape') {
+                if (currentState === GAME_STATE.PLAYING) switchScreen(GAME_STATE.PAUSED);
+                else if (currentState === GAME_STATE.PAUSED) switchScreen(GAME_STATE.PLAYING);
             }
         });
 
         window.addEventListener('keyup', (e) => {
-            let k = e.key.toLowerCase();
-            keys[k] = false;
-            if (k === ' ') keys['spacebar'] = false;
+            let k = e.key.toLowerCase(); keys[k] = false;
+            if (e.code === 'Space') keys['spacebar'] = false;
         });
 
         canvas.addEventListener('mousemove', (e) => {
             let rect = canvas.getBoundingClientRect();
-            mouse.x = e.clientX - rect.left;
-            mouse.y = e.clientY - rect.top;
+            mouse.x = e.clientX - rect.left; mouse.y = e.clientY - rect.top;
         });
 
         canvas.addEventListener('mousedown', (e) => {
+            removeFocusFromButtons();
             if (e.button === 0) mouse.isDown = true;
-            if (e.button === 2 && selectedControl === CONTROL_MODES.MOUSE) {
-                if (currentState === GAME_STATE.PLAYING) player.dash();
-            }
+            if (e.button === 2 && selectedControl === CONTROL_MODES.MOUSE && currentState === GAME_STATE.PLAYING) player.dash();
         });
 
         canvas.addEventListener('mouseup', (e) => {
             if (e.button === 0) mouse.isDown = false;
         });
 
-        canvas.addEventListener('contextmenu', (e) => {
-            e.preventDefault();
+        canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
+        document.getElementById('select-control').addEventListener('change', (e) => {
+            selectedControl = e.target.value;
+            const hintText = document.getElementById('menu-controls-hint');
+            if (selectedControl === CONTROL_MODES.NO_MOUSE) hintText.innerHTML = "<strong>Aksi Utama:</strong> Gerak [WASD / Tombol Panah], Tembak [Tahan SPASI], Dash [Tombol J]";
+            else hintText.innerHTML = "<strong>Aksi Utama:</strong> Gerak [WASD], Bidik [Arahkan Mouse], Tembak [Tahan Klik Kiri], Dash [Klik Kanan]";
+            removeFocusFromButtons();
         });
 
-        // UI INTERACTION SCRIPTS
-        document.getElementById('toggle-control').addEventListener('click', () => {
-            if (selectedControl === CONTROL_MODES.MOUSE) {
-                selectedControl = CONTROL_MODES.NO_MOUSE;
-                document.getElementById('toggle-control').innerText = "NO MOUSE (AUTO)";
-                document.getElementById('menu-controls-hint').innerHTML = "<strong>Aksi:</strong> Gerak [WASD / Arah Panah], Tembak [Tahan SPASI], Dash [Tombol J]";
-            } else {
-                selectedControl = CONTROL_MODES.MOUSE;
-                document.getElementById('toggle-control').innerText = "MOUSE";
-                document.getElementById('menu-controls-hint').innerHTML = "<strong>Aksi:</strong> Gerak [WASD], Bidik [Mouse], Tembak [Klik Kiri], Dash [Klik Kanan]";
-            }
-        });
-
-        document.getElementById('toggle-difficulty').addEventListener('click', () => {
-            if (selectedDifficulty === DIFFICULTIES.EASY) {
-                selectedDifficulty = DIFFICULTIES.NORMAL;
-                document.getElementById('toggle-difficulty').innerText = "NORMAL (2 HP)";
-            } else if (selectedDifficulty === DIFFICULTIES.NORMAL) {
-                selectedDifficulty = DIFFICULTIES.HELL;
-                document.getElementById('toggle-difficulty').innerText = "HELL (1 HIT MATI)";
-            } else {
-                selectedDifficulty = DIFFICULTIES.EASY;
-                document.getElementById('toggle-difficulty').innerText = "EASY (3 HP)";
-            }
+        document.getElementById('select-difficulty').addEventListener('change', (e) => {
+            selectedDifficulty = e.target.value; removeFocusFromButtons();
         });
 
         document.getElementById('btn-to-boss-select').addEventListener('click', () => switchScreen(GAME_STATE.BOSS_SELECT));
         document.getElementById('btn-back-to-menu').addEventListener('click', () => switchScreen(GAME_STATE.MENU));
 
         document.querySelectorAll('.btn-boss').forEach(button => {
-            button.addEventListener('click', (e) => {
+            button.addEventListener('click', () => {
                 currentBossType = button.getAttribute('data-boss');
                 startGame();
             });
@@ -1060,9 +1341,13 @@
         document.getElementById('btn-fail-menu').addEventListener('click', () => switchScreen(GAME_STATE.MENU));
         document.getElementById('btn-victory-continue').addEventListener('click', () => switchScreen(GAME_STATE.BOSS_SELECT));
         document.getElementById('btn-victory-menu').addEventListener('click', () => switchScreen(GAME_STATE.MENU));
+        document.getElementById('btn-resume-game').addEventListener('click', () => switchScreen(GAME_STATE.PLAYING));
+        document.getElementById('btn-restart-game').addEventListener('click', startGame);
+        document.getElementById('btn-menu-from-pause').addEventListener('click', () => switchScreen(GAME_STATE.MENU));
 
         function switchScreen(state) {
             currentState = state;
+            removeFocusFromButtons();
             document.querySelectorAll('.screen, #hud').forEach(el => el.classList.add('hidden'));
 
             if (state === GAME_STATE.MENU) document.getElementById('menu-screen').classList.remove('hidden');
@@ -1070,145 +1355,113 @@
             else if (state === GAME_STATE.GAMEOVER) document.getElementById('game-over-screen').classList.remove('hidden');
             else if (state === GAME_STATE.VICTORY) document.getElementById('victory-screen').classList.remove('hidden');
             else if (state === GAME_STATE.PLAYING) document.getElementById('hud').classList.remove('hidden');
+            else if (state === GAME_STATE.PAUSED) {
+                document.getElementById('pause-screen').classList.remove('hidden');
+                document.getElementById('hud').classList.remove('hidden'); 
+            }
         }
 
-        // GAME CORE ENGINE
         function startGame() {
-            gameFrame = 0;
-            projectiles = [];
-            bossProjectiles = [];
-            minions = [];
-            particles = [];
-            mouse.isDown = false;
-
-            player = new Player(canvas.width / 2, canvas.height * 0.75);
+            gameFrame = 0; projectiles = []; bossProjectiles = []; minions = []; particles = []; miniBoxes = []; activeWallSystems = []; mouse.isDown = false;
+            player = new Player(canvas.width / 2, canvas.height * 0.78);
             boss = new Boss(currentBossType);
-
-            document.getElementById('boss-name-hud').innerText = boss.name;
-            updateHudUI();
-            switchScreen(GAME_STATE.PLAYING);
+            document.getElementById('boss-name-hud').innerText = boss.name + (selectedDifficulty === DIFFICULTIES.NIGHTMARE ? " [NIGHTMARE]" : "");
+            updateHudUI(); switchScreen(GAME_STATE.PLAYING);
         }
 
         function updateHudUI() {
             if (!player || !boss) return;
+            let container = document.getElementById('player-hp-container'); container.innerHTML = '';
+            for (let i = 0; i < player.hp; i++) container.innerHTML += '<span class="hp-heart">❤️</span>';
+            if(player.hp === 0) container.innerHTML = '<span style="font-size:0.9rem; font-weight:900; color:#ef4444;">CRITICAL</span>';
 
-            let container = document.getElementById('player-hp-container');
-            container.innerHTML = '';
-            for (let i = 0; i < player.hp; i++) {
-                container.innerHTML += '<span class="hp-heart">❤️</span>';
-            }
-            if(player.hp === 0) container.innerHTML = '<span style="font-size:1rem; font-weight:900; color:#ef4444;">CRITICAL</span>';
-
-            let bHpPerc = Math.max(0, (boss.hp / boss.maxHp) * 100);
-            document.getElementById('boss-hp-bar').style.width = bHpPerc + '%';
-
-            let bStamPerc = Math.max(0, (boss.stamina / boss.maxStamina) * 100);
-            document.getElementById('boss-stamina-bar').style.width = bStamPerc + '%';
+            document.getElementById('boss-hp-bar').style.width = Math.max(0, (boss.hp / boss.maxHp) * 100) + '%';
+            document.getElementById('boss-stamina-bar').style.width = Math.max(0, (boss.stamina / boss.maxStamina) * 100) + '%';
 
             let statusText = document.getElementById('boss-status-text');
-            if (boss.state === 'STUNNED') {
-                statusText.innerText = "STUNNED (SERANG!)";
-                statusText.style.color = "#2563eb";
-            } else if (boss.state === 'APPEAR') {
-                statusText.innerText = "MEMPERSIAPKAN DIRI";
-                statusText.style.color = "#4b5563";
-            } else if (boss.state === 'TELEPORTING') {
-                statusText.innerText = "ALIRAN RELOKASI";
-                statusText.style.color = "#d97706";
-            } else {
-                statusText.innerText = "IMMORTAL (KEBAL)";
-                statusText.style.color = "#dc2626";
-            }
+            if (boss.state === 'STUNNED') { statusText.innerText = "SISTEM DOWN (SERANG!)"; statusText.style.color = "#3b82f6"; } 
+            else if (boss.state === 'APPEAR') { statusText.innerText = "INITIALIZING"; statusText.style.color = "#64748b"; } 
+            else if (boss.state === 'TELEPORTING') { statusText.innerText = "RELOCATING"; statusText.style.color = "#f59e0b"; } 
+            else { statusText.innerText = "IMMORTAL ACTIVE"; statusText.style.color = "#ef4444"; }
         }
 
         function triggerGameOver(reason) {
-            document.getElementById('game-over-reason').innerText = reason;
-            switchScreen(GAME_STATE.GAMEOVER);
+            document.getElementById('game-over-reason').innerText = reason; switchScreen(GAME_STATE.GAMEOVER);
         }
 
-        function triggerVictory() {
-            switchScreen(GAME_STATE.VICTORY);
-        }
+        function triggerVictory() { switchScreen(GAME_STATE.VICTORY); }
 
         function updateGame() {
             if (currentState !== GAME_STATE.PLAYING) return;
-            gameFrame++;
-
-            player.update();
+            gameFrame++; player.update();
+            
             let dashCooldownText = document.getElementById('hud-dash-cooldown');
-            if (player.dashCooldown > 0) {
-                dashCooldownText.innerText = "DASH CD: " + Math.ceil(player.dashCooldown / 60 * 10) / 10 + "s";
-                dashCooldownText.style.color = "#ef4444";
-            } else {
-                dashCooldownText.innerText = "DASH: READY";
-                dashCooldownText.style.color = "#059669";
-            }
+            if (player.dashCooldown > 0) { dashCooldownText.innerText = "DASH LOCKOUT: " + Math.ceil(player.dashCooldown / 60 * 10) / 10 + "s"; dashCooldownText.style.color = "#ef4444"; } 
+            else { dashCooldownText.innerText = "DASH SYSTEM: READY"; dashCooldownText.style.color = "#10b981"; }
 
             boss.update();
-
             for (let i = minions.length - 1; i >= 0; i--) minions[i].update();
+            
+            for (let i = miniBoxes.length - 1; i >= 0; i--) {
+                if (!miniBoxes[i].update()) miniBoxes.splice(i, 1);
+            }
+
+            if ((boss.type === 'wall' || boss.type === 'gear') && gameFrame % 30 === 0) {
+                if (bossProjectiles.length === 0 && miniBoxes.length === 0) activeWallSystems = [];
+            }
 
             for (let i = projectiles.length - 1; i >= 0; i--) {
-                let p = projectiles[i];
-                p.update();
-
+                let p = projectiles[i]; p.update();
                 let hitSomething = false;
+                
                 if (minions.length > 0) {
                     for (let m = minions.length - 1; m >= 0; m--) {
                         if (Vector2.distance(p, minions[m]) < p.radius + minions[m].radius) {
-                            let alive = minions[m].takeDamage();
-                            if (!alive) minions.splice(m, 1);
-                            hitSomething = true;
-                            break;
+                            if (!minions[m].takeDamage()) minions.splice(m, 1);
+                            hitSomething = true; break;
                         }
                     }
                 }
 
                 if (!hitSomething && Vector2.distance(p, boss) < p.radius + boss.radius && boss.state !== 'TELEPORTING') {
-                    boss.takeDamage(1); 
-                    hitSomething = true;
+                    boss.takeDamage(1); hitSomething = true;
                 }
 
                 if (hitSomething || !p.active) projectiles.splice(i, 1);
             }
 
             for (let i = bossProjectiles.length - 1; i >= 0; i--) {
-                let bp = bossProjectiles[i];
-                bp.update();
-
+                let bp = bossProjectiles[i]; bp.update();
                 if (Vector2.distance(bp, player) < bp.radius + player.radius) {
                     if (!player.isDashing && player.invincibleTimer === 0) {
-                        player.takeDamage();
-                        bossProjectiles.splice(i, 1);
-                        continue;
+                        player.takeDamage(); bossProjectiles.splice(i, 1); continue;
                     }
                 }
                 if (!bp.active) bossProjectiles.splice(i, 1);
             }
 
             for (let i = particles.length - 1; i >= 0; i--) {
-                let active = particles[i].update();
-                if (!active) particles.splice(i, 1);
+                if (!particles[i].update()) particles.splice(i, 1);
             }
         }
 
         function renderGame() {
+            if (currentState === GAME_STATE.PAUSED) return;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
+            if (currentState !== GAME_STATE.PLAYING && currentState !== GAME_STATE.GAMEOVER) return;
 
-            if (currentState !== GAME_STATE.PLAYING && currentState !== GAME_STATE.GAMEOVER && currentState !== GAME_STATE.VICTORY) return;
-
+            for (let part of particles) part.draw();
+            for (let mb of miniBoxes) mb.draw();
             for (let p of projectiles) p.draw();
             for (let bp of bossProjectiles) bp.draw();
             for (let m of minions) m.draw();
+            
             boss.draw();
             player.draw();
-            for (let part of particles) part.draw();
         }
 
         function gameLoop() {
-            updateGame();
-            renderGame();
-            requestAnimationFrame(gameLoop);
+            updateGame(); renderGame(); requestAnimationFrame(gameLoop);
         }
 
         gameLoop();
