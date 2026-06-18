@@ -467,7 +467,7 @@
     <script>
         /**
          * ==========================================================================
-         * 10. ENGINE GAME ARSITEKTUR JAVASCRIPT
+         * 10. ENGINE GAME ARSITEKTUR JAVASCRIPT (DIOPTIMALISASI)
          * ==========================================================================
          */
 
@@ -493,12 +493,42 @@
         let particles = [];
         let miniBoxes = []; 
         let activeWallSystems = []; 
+        let aoeEffects = []; // Visual AOE Ledakan
         let gameFrame = 0;
 
         class Vector2 {
             constructor(x, y) { this.x = x; this.y = y; }
-            static distance(v1, v2) { return Math.hypot(v1.x - v2.x, v1.y - v2.y); }
+            // Menggunakan Squared Distance untuk mencegah CPU overload karena Math.sqrt()
+            static distanceSq(v1, v2) { return (v1.x - v2.x)**2 + (v1.y - v2.y)**2; }
+            static distance(v1, v2) { return Math.sqrt(this.distanceSq(v1, v2)); }
             static angleBetween(v1, v2) { return Math.atan2(v2.y - v1.y, v2.x - v1.x); }
+        }
+
+        // Kelas Efek AOE Visual baru
+        class AOEEffect {
+            constructor(x, y, maxRadius, color) {
+                this.x = x; 
+                this.y = y; 
+                this.radius = 10; 
+                this.maxRadius = maxRadius;
+                this.color = color; 
+                this.alpha = 1.0;
+            }
+            update() {
+                this.radius += 10; // Cepat mengembang
+                this.alpha -= 0.05;
+                return this.alpha > 0;
+            }
+            draw() {
+                ctx.save();
+                ctx.globalAlpha = Math.max(0, this.alpha);
+                ctx.strokeStyle = this.color;
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.restore();
+            }
         }
 
         class WallSystemData {
@@ -511,10 +541,6 @@
             }
         }
 
-        /**
-         * KELAS MINIBOX UNTUK EFEK TELEPORTASI THE WALL (Update)
-         * Dilempar (diberi kecepatan awal), direm dengan gesekan, tidak berputar agar datar.
-         */
         class MiniBox {
             constructor(x, y, vx, vy) {
                 this.x = x;
@@ -530,7 +556,6 @@
                 this.x += this.vx;
                 this.y += this.vy;
                 
-                // Menerapkan gaya gesek untuk melambat
                 this.vx *= 0.92;
                 this.vy *= 0.92;
 
@@ -554,7 +579,6 @@
             draw() {
                 ctx.save();
                 ctx.translate(this.x, this.y);
-                // Menghapus putaran (rotate) agar ke-4 sisinya senantiasa memipih mendatar
                 
                 ctx.fillStyle = this.blink ? '#ffffff' : '#ef4444';
                 ctx.strokeStyle = '#991b1b';
@@ -617,7 +641,7 @@
                     dx = Math.cos(this.angle);
                     dy = Math.sin(this.angle);
                 } else {
-                    let length = Math.hypot(dx, dy);
+                    let length = Math.sqrt(dx*dx + dy*dy);
                     dx /= length; dy /= length;
                 }
 
@@ -665,10 +689,10 @@
                 } else {
                     let targetObj = boss;
                     if (minions.length > 0) {
-                        let minDist = Infinity;
+                        let minDistSq = Infinity;
                         for (let m of minions) {
-                            let d = Vector2.distance(this, m);
-                            if (d < minDist) { minDist = d; targetObj = m; }
+                            let dSq = Vector2.distanceSq(this, m);
+                            if (dSq < minDistSq) { minDistSq = dSq; targetObj = m; }
                         }
                     }
                     this.angle = Math.atan2(targetObj.y - this.y, targetObj.x - this.x);
@@ -756,7 +780,8 @@
                 this.parent = parent;
                 this.index = index;
                 this.radius = 16;
-                this.hp = selectedDifficulty === DIFFICULTIES.NIGHTMARE ? 5 : 3;
+                // Nerf HP Minion di Nightmare mode dari 5 menjadi 4
+                this.hp = selectedDifficulty === DIFFICULTIES.NIGHTMARE ? 4 : 3;
                 this.orbitRadius = 130;
                 this.orbitAngle = (Math.PI * 2 / total) * index;
                 this.x = x;
@@ -766,7 +791,6 @@
                 this.teleportCooldown = Math.floor(Math.random() * 120) + 150; 
                 this.shieldAngle = 0;
                 
-                // State baru untuk minion di Nightmare (ORBIT -> WARN -> STATIONARY)
                 this.mode = 'ORBIT'; 
                 this.warningTimer = 0;
                 this.stationaryTimer = 0;
@@ -786,12 +810,11 @@
                         this.teleportCooldown--;
                         
                         if (this.teleportCooldown <= 0) {
-                            // Teleport ke titik random untuk membatasi pergerakan pemain
                             this.targetX = Math.random() * (canvas.width - 200) + 100;
                             this.targetY = Math.random() * (canvas.height - 200) + 100;
                             
                             this.mode = 'WARN';
-                            this.warningTimer = 45; // 0.75 detik peringatan
+                            this.warningTimer = 45;
                         }
                         
                         this.x += (targetOrbitX - this.x) * 0.02;
@@ -800,19 +823,18 @@
                     } else if (this.mode === 'WARN') {
                         this.warningTimer--;
                         if (this.warningTimer <= 0) {
-                            // Pindah lokasi dan bersiap membuat dinding peluru
                             this.x = this.targetX;
                             this.y = this.targetY;
                             createExplosion(this.x, this.y, 'rgba(245, 158, 11, 0.6)', 25, 4);
                             
                             this.mode = 'STATIONARY';
-                            this.stationaryTimer = 120; // Bertahan menembak selama 2 detik
+                            this.stationaryTimer = 120;
                         }
                     } else if (this.mode === 'STATIONARY') {
                         this.stationaryTimer--;
 
-                        // Menembakkan dinding peluru setiap 15 frame ke arah pemain
-                        if (this.stationaryTimer % 15 === 0) {
+                        // Nerf Tembakan Rentetan Minion (Interval tembakan diperpanjang dari 15 ke 22)
+                        if (this.stationaryTimer % 22 === 0) {
                             let angleToPlayer = Math.atan2(player.y - this.y, player.x - this.x);
                             bossProjectiles.push(new Projectile(this.x, this.y, angleToPlayer, false, 3.5, '#f59e0b'));
                             bossProjectiles.push(new Projectile(this.x, this.y, angleToPlayer - 0.15, false, 3.5, '#f59e0b'));
@@ -825,7 +847,6 @@
                         }
                     }
 
-                    // Perisai melingkar saat orbit saja
                     if (gameFrame % 45 === 0 && this.mode === 'ORBIT') {
                         for (let i = 0; i < 4; i++) {
                             let bulletAngle = this.shieldAngle + (Math.PI * 2 / 4) * i;
@@ -837,7 +858,6 @@
                     this.y = targetOrbitY;
                 }
 
-                // Tembakan reguler hanya aktif di mode Orbit
                 if (this.mode === 'ORBIT') {
                     this.shootTimer++;
                     let currentShootMax = selectedDifficulty === DIFFICULTIES.NIGHTMARE ? 80 : 130;
@@ -1050,7 +1070,6 @@
             }
 
             triggerRingBurstAttack() {
-                // Di-nerf jumlah dan kecepatannya
                 let bulletCount = this.type === 'gear' ? 12 : (selectedDifficulty === DIFFICULTIES.NIGHTMARE ? 28 : 16);
                 let speed = this.type === 'gear' ? 2.5 : (selectedDifficulty === DIFFICULTIES.NIGHTMARE ? 4.0 : 2.5);
                 
@@ -1064,16 +1083,20 @@
 
             triggerPostTeleportEffect() {
                 if (this.type === 'wall') {
-                    // Kotak mini dilempar dengan kecepatan dari pusat bos ke 4 arah kardinal (Atas, Bawah, Kiri, Kanan)
                     let speed = 7;
-                    miniBoxes.push(new MiniBox(this.x, this.y, -speed, 0)); // Kiri
-                    miniBoxes.push(new MiniBox(this.x, this.y, speed, 0));  // Kanan
-                    miniBoxes.push(new MiniBox(this.x, this.y, 0, -speed)); // Atas
-                    miniBoxes.push(new MiniBox(this.x, this.y, 0, speed));  // Bawah
+                    miniBoxes.push(new MiniBox(this.x, this.y, -speed, 0)); 
+                    miniBoxes.push(new MiniBox(this.x, this.y, speed, 0));  
+                    miniBoxes.push(new MiniBox(this.x, this.y, 0, -speed)); 
+                    miniBoxes.push(new MiniBox(this.x, this.y, 0, speed));  
                 } 
                 else if (this.type === 'mother' || this.type === 'gear') {
-                    createExplosion(this.x, this.y, 'rgba(15, 23, 42, 0.2)', 40, 6);
-                    if (Vector2.distance(this, player) < 160) {
+                    // Menerapkan AOE Effect saat bos berpindah tempat
+                    createExplosion(this.x, this.y, 'rgba(15, 23, 42, 0.2)', 20, 6);
+                    aoeEffects.push(new AOEEffect(this.x, this.y, 160, 'rgba(239, 68, 68, 1)'));
+
+                    // Menggunakan Squared Distance untuk mencegah CPU overload
+                    let distSq = Vector2.distanceSq(this, player);
+                    if (distSq < 160 * 160) {
                         player.takeDamage();
                     }
                 }
@@ -1082,7 +1105,6 @@
             executeAttacks() {
                 if (this.type === 'vortex') {
                     let normalSpinAngle = (gameFrame * 0.035) % (Math.PI * 2);
-                    // Nerf Vortex: Interval diperbesar agar peluru tidak serapat sebelumnya
                     let interval = 9;
                     if (selectedDifficulty === DIFFICULTIES.NIGHTMARE) interval = 5;
                     else if (selectedDifficulty === DIFFICULTIES.EASY) interval = 13;
@@ -1102,7 +1124,6 @@
                     if (selectedDifficulty === DIFFICULTIES.NIGHTMARE) currentSpawnTime = 30;
 
                     if (gameFrame % currentSpawnTime === 0) {
-                        // Buff the Wall: Nightmare maksimal 5 dinding, Normal/Mudah tetap 3.
                         let maxWalls = selectedDifficulty === DIFFICULTIES.NIGHTMARE ? 5 : 3;
                         
                         if (activeWallSystems.length < maxWalls) {
@@ -1126,7 +1147,8 @@
                     }
                 } 
                 else if (this.type === 'mother') {
-                    let rate = selectedDifficulty === DIFFICULTIES.NIGHTMARE ? 25 : 45;
+                    // Nerf The Mother - Interval Tembakan Nightmare Diperlambat
+                    let rate = selectedDifficulty === DIFFICULTIES.NIGHTMARE ? 35 : 55;
                     if (gameFrame % rate === 0) {
                         let angleToPlayer = Math.atan2(player.y - this.y, player.x - this.x);
                         let bSpeed = selectedDifficulty === DIFFICULTIES.NIGHTMARE ? 4.5 : 2.6;
@@ -1137,13 +1159,11 @@
                     }
                 }
                 else if (this.type === 'gear') {
-                    // Vortex lemot
                     if (gameFrame % 18 === 0) {
                         let angle = (gameFrame * 0.035) % (Math.PI * 2);
                         bossProjectiles.push(new Projectile(this.x, this.y, angle, false, 2.5, '#ef4444'));
                         bossProjectiles.push(new Projectile(this.x, this.y, angle + Math.PI, false, 2.5, '#ef4444'));
                     }
-                    // Dinding Wall yang jarang muncul (Maksimal 1)
                     let wallSpawnTime = selectedDifficulty === DIFFICULTIES.NIGHTMARE ? 100 : 160;
                     if (gameFrame % wallSpawnTime === 0 && activeWallSystems.length < 1) {
                         let newWall = new WallSystemData(Math.floor(Math.random() * 4), Math.random() * canvas.width, 160, 1.8);
@@ -1273,6 +1293,8 @@
         }
 
         function createExplosion(x, y, color, count, speedFactor) {
+            // Anti-Lag: Capping memori partikel yang tampil
+            if (particles.length > 200) return; 
             for (let i = 0; i < count; i++) particles.push(new Particle(x, y, color, speedFactor));
         }
 
@@ -1362,7 +1384,16 @@
         }
 
         function startGame() {
-            gameFrame = 0; projectiles = []; bossProjectiles = []; minions = []; particles = []; miniBoxes = []; activeWallSystems = []; mouse.isDown = false;
+            gameFrame = 0; 
+            projectiles = []; 
+            bossProjectiles = []; 
+            minions = []; 
+            particles = []; 
+            miniBoxes = []; 
+            activeWallSystems = []; 
+            aoeEffects = []; // Reset AOE
+            mouse.isDown = false;
+            
             player = new Player(canvas.width / 2, canvas.height * 0.78);
             boss = new Boss(currentBossType);
             document.getElementById('boss-name-hud').innerText = boss.name + (selectedDifficulty === DIFFICULTIES.NIGHTMARE ? " [NIGHTMARE]" : "");
@@ -1406,6 +1437,10 @@
                 if (!miniBoxes[i].update()) miniBoxes.splice(i, 1);
             }
 
+            for (let i = aoeEffects.length - 1; i >= 0; i--) {
+                if (!aoeEffects[i].update()) aoeEffects.splice(i, 1);
+            }
+
             if ((boss.type === 'wall' || boss.type === 'gear') && gameFrame % 30 === 0) {
                 if (bossProjectiles.length === 0 && miniBoxes.length === 0) activeWallSystems = [];
             }
@@ -1414,16 +1449,19 @@
                 let p = projectiles[i]; p.update();
                 let hitSomething = false;
                 
+                // Gunakan Squared Distance untuk Tabrakan
                 if (minions.length > 0) {
                     for (let m = minions.length - 1; m >= 0; m--) {
-                        if (Vector2.distance(p, minions[m]) < p.radius + minions[m].radius) {
+                        let radSum = p.radius + minions[m].radius;
+                        if (Vector2.distanceSq(p, minions[m]) < radSum * radSum) {
                             if (!minions[m].takeDamage()) minions.splice(m, 1);
                             hitSomething = true; break;
                         }
                     }
                 }
 
-                if (!hitSomething && Vector2.distance(p, boss) < p.radius + boss.radius && boss.state !== 'TELEPORTING') {
+                let radSumBoss = p.radius + boss.radius;
+                if (!hitSomething && Vector2.distanceSq(p, boss) < radSumBoss * radSumBoss && boss.state !== 'TELEPORTING') {
                     boss.takeDamage(1); hitSomething = true;
                 }
 
@@ -1432,7 +1470,8 @@
 
             for (let i = bossProjectiles.length - 1; i >= 0; i--) {
                 let bp = bossProjectiles[i]; bp.update();
-                if (Vector2.distance(bp, player) < bp.radius + player.radius) {
+                let radSumBP = bp.radius + player.radius;
+                if (Vector2.distanceSq(bp, player) < radSumBP * radSumBP) {
                     if (!player.isDashing && player.invincibleTimer === 0) {
                         player.takeDamage(); bossProjectiles.splice(i, 1); continue;
                     }
@@ -1450,6 +1489,7 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             if (currentState !== GAME_STATE.PLAYING && currentState !== GAME_STATE.GAMEOVER) return;
 
+            for (let aoe of aoeEffects) aoe.draw();
             for (let part of particles) part.draw();
             for (let mb of miniBoxes) mb.draw();
             for (let p of projectiles) p.draw();
