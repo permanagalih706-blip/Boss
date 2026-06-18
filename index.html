@@ -60,9 +60,8 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            background: rgba(248, 250, 252, 0.85);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            /* OPTIMASI LAG: Backdrop filter blur dimatikan, diganti solid color transparan */
+            background: rgba(248, 250, 252, 0.95);
             z-index: 10;
             transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             padding: 40px;
@@ -261,12 +260,12 @@
             align-items: flex-start;
             pointer-events: none;
             z-index: 5;
-            transition: opacity 0.3s;
+            transition: opacity 0.3s ease; /* Transisi agar ubah opacity smooth */
         }
 
         .hud-panel {
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(10px);
+            /* OPTIMASI LAG: Backdrop filter blur dimatikan, diganti solid color transparan */
+            background: rgba(255, 255, 255, 0.95);
             border: 2px solid #e2e8f0;
             padding: 16px 22px;
             border-radius: 18px;
@@ -467,7 +466,7 @@
     <script>
         /**
          * ==========================================================================
-         * 10. ENGINE GAME ARSITEKTUR JAVASCRIPT (DIOPTIMALISASI)
+         * 10. ENGINE GAME ARSITEKTUR JAVASCRIPT (DIOPTIMALISASI TOTAL)
          * ==========================================================================
          */
 
@@ -493,18 +492,19 @@
         let particles = [];
         let miniBoxes = []; 
         let activeWallSystems = []; 
-        let aoeEffects = []; // Visual AOE Ledakan
+        let aoeEffects = []; 
         let gameFrame = 0;
+        
+        // Variabel global untuk mencegah DOM Thrashing di updateHudUI()
+        let lastPlayerHp = -1;
 
         class Vector2 {
             constructor(x, y) { this.x = x; this.y = y; }
-            // Menggunakan Squared Distance untuk mencegah CPU overload karena Math.sqrt()
             static distanceSq(v1, v2) { return (v1.x - v2.x)**2 + (v1.y - v2.y)**2; }
             static distance(v1, v2) { return Math.sqrt(this.distanceSq(v1, v2)); }
             static angleBetween(v1, v2) { return Math.atan2(v2.y - v1.y, v2.x - v1.x); }
         }
 
-        // Kelas Efek AOE Visual baru
         class AOEEffect {
             constructor(x, y, maxRadius, color) {
                 this.x = x; 
@@ -515,7 +515,7 @@
                 this.alpha = 1.0;
             }
             update() {
-                this.radius += 10; // Cepat mengembang
+                this.radius += 10; 
                 this.alpha -= 0.05;
                 return this.alpha > 0;
             }
@@ -780,7 +780,6 @@
                 this.parent = parent;
                 this.index = index;
                 this.radius = 16;
-                // Nerf HP Minion di Nightmare mode dari 5 menjadi 4
                 this.hp = selectedDifficulty === DIFFICULTIES.NIGHTMARE ? 4 : 3;
                 this.orbitRadius = 130;
                 this.orbitAngle = (Math.PI * 2 / total) * index;
@@ -833,7 +832,6 @@
                     } else if (this.mode === 'STATIONARY') {
                         this.stationaryTimer--;
 
-                        // Nerf Tembakan Rentetan Minion (Interval tembakan diperpanjang dari 15 ke 22)
                         if (this.stationaryTimer % 22 === 0) {
                             let angleToPlayer = Math.atan2(player.y - this.y, player.x - this.x);
                             bossProjectiles.push(new Projectile(this.x, this.y, angleToPlayer, false, 3.5, '#f59e0b'));
@@ -1090,11 +1088,9 @@
                     miniBoxes.push(new MiniBox(this.x, this.y, 0, speed));  
                 } 
                 else if (this.type === 'mother' || this.type === 'gear') {
-                    // Menerapkan AOE Effect saat bos berpindah tempat
                     createExplosion(this.x, this.y, 'rgba(15, 23, 42, 0.2)', 20, 6);
                     aoeEffects.push(new AOEEffect(this.x, this.y, 160, 'rgba(239, 68, 68, 1)'));
 
-                    // Menggunakan Squared Distance untuk mencegah CPU overload
                     let distSq = Vector2.distanceSq(this, player);
                     if (distSq < 160 * 160) {
                         player.takeDamage();
@@ -1147,7 +1143,6 @@
                     }
                 } 
                 else if (this.type === 'mother') {
-                    // Nerf The Mother - Interval Tembakan Nightmare Diperlambat
                     let rate = selectedDifficulty === DIFFICULTIES.NIGHTMARE ? 35 : 55;
                     if (gameFrame % rate === 0) {
                         let angleToPlayer = Math.atan2(player.y - this.y, player.x - this.x);
@@ -1293,7 +1288,6 @@
         }
 
         function createExplosion(x, y, color, count, speedFactor) {
-            // Anti-Lag: Capping memori partikel yang tampil
             if (particles.length > 200) return; 
             for (let i = 0; i < count; i++) particles.push(new Particle(x, y, color, speedFactor));
         }
@@ -1391,8 +1385,10 @@
             particles = []; 
             miniBoxes = []; 
             activeWallSystems = []; 
-            aoeEffects = []; // Reset AOE
+            aoeEffects = []; 
             mouse.isDown = false;
+            
+            lastPlayerHp = -1; // Reset agar UI nyawa ke-refresh di awal
             
             player = new Player(canvas.width / 2, canvas.height * 0.78);
             boss = new Boss(currentBossType);
@@ -1402,9 +1398,16 @@
 
         function updateHudUI() {
             if (!player || !boss) return;
-            let container = document.getElementById('player-hp-container'); container.innerHTML = '';
-            for (let i = 0; i < player.hp; i++) container.innerHTML += '<span class="hp-heart">❤️</span>';
-            if(player.hp === 0) container.innerHTML = '<span style="font-size:0.9rem; font-weight:900; color:#ef4444;">CRITICAL</span>';
+            
+            // OPTIMASI DOM Thrashing: Cuma update HTML inner kalau HP berubah
+            if (player.hp !== lastPlayerHp) {
+                let container = document.getElementById('player-hp-container'); 
+                container.innerHTML = '';
+                for (let i = 0; i < player.hp; i++) container.innerHTML += '<span class="hp-heart">❤️</span>';
+                if(player.hp === 0) container.innerHTML = '<span style="font-size:0.9rem; font-weight:900; color:#ef4444;">CRITICAL</span>';
+                
+                lastPlayerHp = player.hp;
+            }
 
             document.getElementById('boss-hp-bar').style.width = Math.max(0, (boss.hp / boss.maxHp) * 100) + '%';
             document.getElementById('boss-stamina-bar').style.width = Math.max(0, (boss.stamina / boss.maxStamina) * 100) + '%';
@@ -1425,6 +1428,14 @@
         function updateGame() {
             if (currentState !== GAME_STATE.PLAYING) return;
             gameFrame++; player.update();
+
+            // FITUR UI TRANSISI TRANSPARAN: Kalau player ngumpet di atas, HUD pudar
+            let hudElement = document.getElementById('hud');
+            if (player.y < 130) {
+                hudElement.style.opacity = '0.25';
+            } else {
+                hudElement.style.opacity = '1';
+            }
             
             let dashCooldownText = document.getElementById('hud-dash-cooldown');
             if (player.dashCooldown > 0) { dashCooldownText.innerText = "DASH LOCKOUT: " + Math.ceil(player.dashCooldown / 60 * 10) / 10 + "s"; dashCooldownText.style.color = "#ef4444"; } 
@@ -1449,7 +1460,6 @@
                 let p = projectiles[i]; p.update();
                 let hitSomething = false;
                 
-                // Gunakan Squared Distance untuk Tabrakan
                 if (minions.length > 0) {
                     for (let m = minions.length - 1; m >= 0; m--) {
                         let radSum = p.radius + minions[m].radius;
